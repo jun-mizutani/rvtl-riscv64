@@ -1202,8 +1202,8 @@ CopyFilename:
         beqz    a4, 4f                  # ディレクトリフラグ
         li      a0, '/'                 # ディレクトリ名なら"/"付加
         sb      a0, (s8)               
-    4:  mv      a0, zero
-        sb      a0, 1(s8)               # 文字列末(0)の書き込み
+    4:  # mv      a0, zero
+        sb      zero, (s8)               # 文字列末(0)の書き込み
         addi    s8, s8, 2               # FNBPointer を更新
     5:
         ld      a4, 40(sp)
