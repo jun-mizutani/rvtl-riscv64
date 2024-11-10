@@ -890,8 +890,7 @@ WarmInit:
         addi    sp, sp, 16
 WarmInit2:
         # コマンド入力元をコンソールに設定
-        mv      a0, zero                # 0
-        sb      a0, -4(gp)              # Read from console
+        sb      zero, -4(gp)            # Read from console
 WarmInit1:
         #システム変数及び作業用フラグの初期化
         li      a0, 1                   # 1
@@ -3040,7 +3039,7 @@ LabelSearch:
         sd      a1, (t0)                # ラベルの次行先頭を設定
         add     t2, t2, a2
         jal     GetChar
-        mv      a0, zero                # 見つかった a1 = 0
+        mv      a0, zero                # 見つかった a0 = 0
         ld      a4,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
@@ -3372,8 +3371,7 @@ Com_CdWrite:
         li      a0, 10
         sb      a0, (t2)                # 改行書込み
         addi    t2, t2, 1
-        mv      a0, zero
-        sb      a0, (t2)                # EOL
+        sb      zero, (t2)              # EOL
 
         la      a0, input2              # バッファアドレス
         jal     StrLen                  # a0の文字列長をa1に返す
@@ -3880,8 +3878,8 @@ ParseArg:
         beq     a0, t0, 8f
         addi    t2, t2, 1
         j       5b                      # 空白でなければ次の文字
-    8:  mv      a0, zero
-        sb      a0, (t2)                # スペースを 0 に置換
+
+    8:  sb      zero, (t2)              # スペースを 0 に置換
         bnez    a1, 7f                  # > の後ろはファイル名のみ
 
     6:  addi    t2, t2, 1
@@ -3896,10 +3894,9 @@ ParseArg:
         ld      a1, (t0)                # a1:リダイレクト先ファイル名
         addi    a2, a2, 1
 pa_exit:
-        mv      a0, zero
         slli    t0, a2, 3
         add     t0, t1, t0
-        sd      a0, (t0)                # 引数ポインタ配列の最後
+        sd      zero, (t0)              # 引数ポインタ配列の最後
         ld      t1, 24(sp)
         ld      t2, 16(sp)
         ld      a0,  8(sp)
@@ -3908,10 +3905,9 @@ pa_exit:
         ret
 
 end_mark:
-        mv      a0, zero
         slli    t0, a2, 3
         add     t0, t1, t0
-        sd      a0, (t0)                # コマンドの区切り NullPtr
+        sd      zero, (t0)              # コマンドの区切り NullPtr
         addi    a2, a2, 1               # 配列インデックス
         ret
 
@@ -4168,8 +4164,7 @@ func_ls:
         li      a2, '/'
         beq     s4, a2, 3f              # / 有
         sb      a2, -1(a3)              # / 書き込み
-        mv      a2, zero
-        sb      a2, (a3)                # end mark
+        sb      zero, (a3)              # end mark
     3:
         jal     fropen
         bltz     a0, 6f                 # エラーチェックして終了
@@ -4594,9 +4589,8 @@ URL_Decode:
         addi    s0, s0, 1
         ble     a0, s4, 1b
 
-        mv      s1, zero
         add     t0, a2, s0
-        sb      s1, (t0)
+        sb      zero, (t0)
         mv      a0, s0                # 文字数を返す
         ld      s4, 40(sp)
         ld      s3, 32(sp)

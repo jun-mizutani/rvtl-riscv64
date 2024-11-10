@@ -407,9 +407,8 @@ regist_history:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
 
-        mv      a0, zero
         add     t0, s6, s9
-        sb      a0, (t0)                #  write 0 at eol
+        sb      zero, (t0)              #  write 0 at eol
         jal     check_history
         beq     a1, zero, 1f            #  同一行登録済み
 
@@ -947,9 +946,8 @@ InsertFileName:
         bnez    a0, 8b                 # 文字列末の0で終了
         j       10f                    # コピー終了
     9:
-        mv      a0, zero               # 補完終了
-        add     t0, s6, s10
-        sb      a0, (t0)               # 入力バッファ末を0
+        add     t0, s6, s10            # 補完終了
+        sb      zero, (t0)             # 入力バッファ末を0
     10:
         ld      a3, 32(sp)
         ld      a2, 24(sp)
@@ -975,8 +973,7 @@ ExtractFilename:
         sd      ra,  0(sp)
         add     a3, s10, s6             # (入力済み位置+1)をa3に
         mv      a1, a3
-        mv      a0, zero
-        sb      a0, (a1)                # 入力済み文字列末をマーク
+        sb      zero, (a1)              # 入力済み文字列末をマーク
         mv      s8, s7                  # FNBPointer=FileNameBuffer
         mv      s9, zero                # FNCount=0
     1:                                  # 部分パス名の先頭を捜す
@@ -1005,8 +1002,8 @@ ExtractFilename:
         j       6f                      # a1=a3 なら「/」は無い
 
     5:  addi    a3, a3, 1               # ファイル名から/を除く
-    6:  mv      a0, zero                # ディレクトリ名をコピー
-        sb      a0, (s11)               # ディレクトリ名バッファを空に
+    6:  # ディレクトリ名をコピー
+        sb      zero, (s11)             # ディレクトリ名バッファを空に
         sd      a3, (t4)                # 部分ファイル名先頭
         sub     a2, a3, a1              # a2=ディレクトリ名文字数
         beq     a2, zero, 8f            # ディレクトリ部分がない
@@ -1202,8 +1199,7 @@ CopyFilename:
         beqz    a4, 4f                  # ディレクトリフラグ
         li      a0, '/'                 # ディレクトリ名なら"/"付加
         sb      a0, (s8)               
-    4:  # mv      a0, zero
-        sb      zero, (s8)               # 文字列末(0)の書き込み
+    4:  sb      zero, (s8)              # 文字列末(0)の書き込み
         addi    s8, s8, 2               # FNBPointer を更新
     5:
         ld      a4, 40(sp)
