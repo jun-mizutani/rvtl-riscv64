@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : vtllib.s
-#  2024/11/08
+#  2024/11/10
 #  Copyright (C) 2003-2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  vtllib.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -296,7 +296,7 @@ RL_del1_char:                           #  while(p<eol){*p++=*q++;}
 #  Filename Completion
 # -------------------------------------------------------------------------
 RL_tab:
-        jal     FilenameCompletion     #  ファイル名補完
+        jal     FilenameCompletion      #  ファイル名補完
         jal     DispLine
         j       RL_next_char
 
@@ -877,13 +877,6 @@ FilenameCompletion:
         addi    sp, sp, 80
         ret
 
-# ==============================================================
-                .align  3
-NoCompletion:   .asciz  "<none>"
-                .align  3
-current_dir:    .asciz  "./"
-                .align  3
-
 # --------------------------------------------------------------
 #  一致したファイル名が複数なら表示し、なるべく長く補完する。
 #  t4:PartialName, t3:FNArray
@@ -1009,9 +1002,9 @@ ExtractFilename:
         li      t0, '/'
         beq     a0, t0, 5f              # 発見したら5f
         bne     a1, a3, 4b              # 前方にさらに/を探す
+        j       6f                      # a1=a3 なら「/」は無い
 
     5:  addi    a3, a3, 1               # ファイル名から/を除く
-
     6:  mv      a0, zero                # ディレクトリ名をコピー
         sb      a0, (s11)               # ディレクトリ名バッファを空に
         sd      a3, (t4)                # 部分ファイル名先頭
@@ -1157,8 +1150,8 @@ GetFileStat:
         ret
 
 # --------------------------------------------------------------
-#  ディレクトリ中のファイル名事に呼ばれ、部分ファイル名に一致したファイル名を
-#  ファイル名バッファ (FileNameBuffer)に追記する
+#  ディレクトリ中のファイル名ごとに呼ばれ、部分ファイル名に一致した
+#  ファイル名をファイル名バッファ (FileNameBuffer)に追記する
 #  ファイル名がディレクトリ名なら"/"を付加する
 #  entry a0 : ディレクトリフラグ
 #        a1 : ファイル名先頭アドレス
@@ -1380,11 +1373,11 @@ RESTORE_TERMIOS:
 #  a1 : termios buffer address
 # --------------------------------------------------------------
 tcgetattr:
-        ld      a0, TC_GETS
+        li      a0, TCGETS
         j       IOCTL
 
 tcsetattr:
-        ld      a0, TC_SETS
+        li      a0, TCSETS
 
 # --------------------------------------------------------------
 #  標準入力の ioctl の実行
@@ -1413,9 +1406,6 @@ IOCTL:
         ld      ra,  0(sp)
         addi    sp, sp, 32
         ret
-
-TC_GETS:    .long   TCGETS
-TC_SETS:    .long   TCSETS
 
 # --------------------------------------------------------------
 #  input 1 character from stdin
@@ -1527,56 +1517,61 @@ fclose:
 
 # ==============================================================
 .data
-                    .align      2
-CURSOR_REPORT:      .byte       4, 0x1B
-                    .ascii      "[6n"               #  ^[[6n
-                    .align      2
-SAVE_CURSOR:        .byte       2, 0x1B, '7'        #  ^[[7
-                    .align      2
-RESTORE_CURSOR:     .byte       2, 0x1B, '8'        #  ^[[8
-                    .align      2
-DEL_AT_CURSOR:      .byte       4, 0x1B
-                    .ascii      "[1P"               #  ^[[1P
-                    .align      2
-CURSOR_RIGHT:       .byte       4, 0x1B
-                    .ascii      "[1C"               #  ^[[1C
-                    .align      2
-CURSOR_LEFT:        .byte       4, 0x1B
-                    .ascii      "[1D"               #  ^[[1D
-                    .align      2
-CURSOR_TOP:         .byte       1, 0x0D
-                    .align      2
-CLEAR_EOL:          .byte       4, 0x1B
-                    .ascii      "[0K"               #  ^[[0K
-                    .align      2
-CSI:                .byte       2, 0x1B, '['        #  ^[[
+                    .align  2
+CURSOR_REPORT:      .byte   4, 0x1B
+                    .ascii  "[6n"          #  ^[[6n
+                    .align  2
+SAVE_CURSOR:        .byte   2, 0x1B, '7'   #  ^[[7
+                    .align  2
+RESTORE_CURSOR:     .byte   2, 0x1B, '8'   #  ^[[8
+                    .align  2
+DEL_AT_CURSOR:      .byte   4, 0x1B
+                    .ascii  "[1P"          #  ^[[1P
+                    .align  2
+CURSOR_RIGHT:       .byte   4, 0x1B
+                    .ascii  "[1C"          #  ^[[1C
+                    .align  2
+CURSOR_LEFT:        .byte   4, 0x1B
+                    .ascii  "[1D"          #  ^[[1D
+                    .align  2
+CURSOR_TOP:         .byte   1, 0x0D
+                    .align  2
+CLEAR_EOL:          .byte   4, 0x1B
+                    .ascii  "[0K"          #  ^[[0K
+                    .align  2
+CSI:                .byte   2, 0x1B, '['   #  ^[[
 
-                    .align  3
+                    .align  2
+NoCompletion:       .asciz  "<none>"
+                    .align  2
+current_dir:        .asciz  "./"
+
+                    .align  2
 LINE_TOP:           .quad   7          #  No. of prompt characters
 FLOATING_TOP:       .quad   7          #  Save cursor position
 
 # ==============================================================
 .bss
-                    .align  3
+                    .align  2
 HistLine:           .quad   0
 HistUpdate:         .quad   0
 input:              .skip   MAXLINE
 
-                    .align  3
+                    .align  2
 history:            .skip   MAXLINE * MAXHISTORY
 
-                    .align  3
+                    .align  2
 DirName:            .skip   MAXLINE
 PathName:           .skip   MAXLINE
 
-                    .align  3
+                    .align  2
 PartialName:        .quad   0           #  部分ファイル名先頭アドレス格納
 FileNameBuffer:     .skip   2048, 0     #  2kbyte for filename completion
 FNArray:            .skip   MAX_FILE*8  #  long* Filename(0..255)
 FNBPointer:         .quad   0           #  FileNameBufferの格納済みアドレス+1
 FNCount:            .quad   0           #  No. of Filenames
 
-                    .align 3
+                    .align  2
 old_termios:
 ot_c_iflag:         .long   0           #  input mode flags
 ot_c_oflag:         .long   0           #  output mode flags
@@ -1585,7 +1580,7 @@ ot_c_lflag:         .long   0           #  local mode flags
 ot_c_line:          .byte   0           #  line discipline
 ot_c_cc:            .skip   NCCS        #  control characters
 
-                    .align 3
+                    .align  2
 new_termios:
 nt_c_iflag:         .long   0           #  input mode flags
 nt_c_oflag:         .long   0           #  output mode flags
@@ -1594,7 +1589,7 @@ nt_c_lflag:         .long   0           #  local mode flags
 nt_c_line:          .byte   0           #  line discipline
 nt_c_cc:            .skip   NCCS        #  control characters
 
-                    .align 3
+                    .align  2
 new_sig:
 nsa_sighandler:     .quad   0           #   0
 nsa_mask:           .quad   0           #   8
@@ -1619,41 +1614,41 @@ ws_col:             .hword  0
 ws_xpixel:          .hword  0
 ws_ypixel:          .hword  0
 
-ru:                               #  18 words
-ru_utime_tv_sec:    .long   0       #  user time used
+ru:                                 # 18 words
+ru_utime_tv_sec:    .long   0       # user time used
 ru_utime_tv_usec:   .long   0       #
-ru_stime_tv_sec:    .long   0       #  system time used
+ru_stime_tv_sec:    .long   0       # system time used
 ru_stime_tv_usec:   .long   0       #
-ru_maxrss:          .long   0       #  maximum resident set size
-ru_ixrss:           .long   0       #  integral shared memory size
-ru_idrss:           .long   0       #  integral unshared data size
-ru_isrss:           .long   0       #  integral unshared stack size
-ru_minflt:          .long   0       #  page reclaims
-ru_majflt:          .long   0       #  page faults
-ru_nswap:           .long   0       #  swaps
-ru_inblock:         .long   0       #  block input operations
-ru_oublock:         .long   0       #  block output operations
-ru_msgsnd:          .long   0       #  messages sent
-ru_msgrcv:          .long   0       #  messages received
-ru_nsignals:        .long   0       #  signals received
-ru_nvcsw:           .long   0       #  voluntary context switches
-ru_nivcsw:          .long   0       #  involuntary
+ru_maxrss:          .long   0       # maximum resident set size
+ru_ixrss:           .long   0       # integral shared memory size
+ru_idrss:           .long   0       # integral unshared data size
+ru_isrss:           .long   0       # integral unshared stack size
+ru_minflt:          .long   0       # page reclaims
+ru_majflt:          .long   0       # page faults
+ru_nswap:           .long   0       # swaps
+ru_inblock:         .long   0       # block input operations
+ru_oublock:         .long   0       # block output operations
+ru_msgsnd:          .long   0       # messages sent
+ru_msgrcv:          .long   0       # messages received
+ru_nsignals:        .long   0       # signals received
+ru_nvcsw:           .long   0       # voluntary context switches
+ru_nivcsw:          .long   0       # involuntary
 
-                    .align 3
-dir_ent:                           #  256 bytesのdir_ent格納領域
-#         u64             d_ino;      #  0
-#         s64             d_off;      #  8
-#         unsigned short  d_reclen;   #  16
-#         unsigned char   d_type;     #  18
-#         char            d_name(0);  #  19    ディレクトリエントリの名前
+                    .align  2
+dir_ent:                            #  256 bytesのdir_ent格納領域
+#        u64             d_ino;     #  0
+#        s64             d_off;     #  8
+#        unsigned short  d_reclen;  #  16
+#        unsigned char   d_type;    #  18
+#        char            d_name(0); #  19    ディレクトリエントリの名前
 #  -----------------------------------------------------------------------
-#  de_d_ino:         .long   0       #  0
-#  de_d_off:         .long   0       #  4
-#  de_d_reclen:      .hword  0       #  8
-#  de_d_name:                        #  10    ディレクトリエントリの名前
+#  de_d_ino:         .long   0      #  0
+#  de_d_off:         .long   0      #  4
+#  de_d_reclen:      .hword  0      #  8
+#  de_d_name:                       #  10    ディレクトリエントリの名前
                     .skip   512
 
-                    .align 3
+                    .align  2
 #  from linux-4.1.2/include/uapi/asm-generic/stat.h
 file_stat:                          #  128 bytes
 fs_st_dev:          .quad   0       #  0  ファイルのデバイス番号
