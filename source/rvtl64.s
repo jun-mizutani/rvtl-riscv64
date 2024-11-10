@@ -109,7 +109,7 @@ _start:
         sd      a4, 0(a3)           # set cgiflag=1, cgiモード
 
         # gp に変数領域の先頭アドレスを設定、変数のアクセスはgpを使う
-        la      gp, VarArea         # gp の内容は常に VarArea 
+        la      gp, VarArea         # gp の内容は常に VarArea
 
         # システム変数の初期値を設定
         mv      a0, zero            # 0 を渡して現在値を得る
@@ -231,8 +231,7 @@ MainLoop:
         jal     WarmInit                # 実行停止
         j       3f
 
-        # 0除算エラーが発生したらメッセージを表示して停止
-    1:  lb      a2, -6(gp)              # エラー
+    1:  lb      a2, -6(gp)              # 0除算エラー?
         beqz    a2, 2f
         la      a0, err_div0            # 0除算メッセージ
         jal     OutAsciiZ
@@ -250,25 +249,22 @@ MainLoop:
         beqz    a2, ReadLine            # ExecMode=Memory ?
         j       ReadMem                 # メモリから行取得
 
-        # 空白なら読み飛ばし
     4:  jal     GetChar
     5:  li      t0, ' '                 # 空白読み飛ばし
         bne     tp, t0, 6f
         jal     GetChar
         j       5b
 
-    6:  # 行番号付なら編集モード
-        jal     IsNum                  # 行番号付なら編集モード
-        bltz    a0, 7f                 # a0=-1なら非数値
-        jal     EditMode               # 編集モード
+    6:  jal     IsNum                   # 行番号付なら編集モード
+        bltz    a0, 7f                  # a0=-1なら非数値
+        jal     EditMode                # 編集モード
         j       MainLoop
 
-    7:  # 英文字なら変数代入、異なればコマンド
-        la      a2, counter
+    7:  la      a2, counter
         ld      a0, (a2)
         addi    a0, a0, 1
         sd      a0, (a2)
-        jal     IsAlpha
+        jal     IsAlpha                 # 英文字なら変数代入
         bltz    a0, Command             # コマンド実行
     8:  jal     SetVar                  # 変数代入
         j       MainLoop
@@ -284,8 +280,7 @@ Exp_Error:
         li      t0, 2
         beq     a2, t0, 9f
         la      a0, err_label           # ラベル未定義メッセージ
-    9:
-        j       Error
+    9:  j       Error
 
 #-------------------------------------------------------------------------
 # キー入力またはファイル入力されたコードを実行
@@ -297,10 +292,9 @@ ReadLine:
         jal     READ_FILE               # ファイルから入力
         j       MainLoop
 
-    1:  # プロンプトを表示してコンソールからキー入力
-        jal     DispPrompt
+    1:  jal     DispPrompt              # プロンプトを表示
         la      a1, input2
-        li      a0, MAXLINE             # 1 行入力
+        li      a0, MAXLINE             # コンソールから1行入力
         jal     READ_LINE               # 編集機能付キー入力
         mv      t2, a1                  # 入力バッファ先頭
         mv      t1, t2
@@ -318,7 +312,7 @@ ReadMem:
         lw      a0, (t1)
         add     t1, t1, a0              # Next Line
 
-        #次行へのオフセットが0ならばコード末
+        # 次行へのオフセットが0ならばコード末
         lw      a0, (t1)                # 次行オフセット
         bgt     a0, zero, 2f            # コード末？
 
@@ -330,8 +324,7 @@ ReadMem:
         sb      a0, -3(gp)              # ExecMode=Direct
         j       MainLoop
 
-        #現在の行番号を # に設定し、コード部分先頭アドレスを t2 に設定
-    2:
+    2:  # 現在の行番号を # に設定し、コード部分先頭アドレスを t2 に設定
         jal     SetLineNo               # 行番号を # に設定
         addi    t2, t1, 8               # 行のコード先頭
         mv      s1, zero                # EOL=no
@@ -408,7 +401,7 @@ GetString:
         li      a1, FNAMEMAX
     1: # next:
         jal     GetChar
-        li      t0 , '"'               # "' closing quote for emacs
+        li      t0 , '"'
         beq     tp, t0, 2f
         beq     tp, zero, 2f
         add     t0, a3, a2
@@ -1220,7 +1213,7 @@ SetVar:         # 変数代入
 
     s_range_err:
         jal     RangeError              # アクセス可能範囲を超えた
-    s_var_exit: 
+    s_var_exit:
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -2163,7 +2156,7 @@ DebugList:
         j       2b
     3:  jal     NewLine
         add     t1, t1, a2
-        j       1b                     # 次行処理
+        j       1b                      # 次行処理
 
     4:  jal     NewLine
         ld      t1, 40(sp)
@@ -3783,7 +3776,7 @@ close_old_pipe:
 
 #-------------------------------------------------------------------------
 # デバッグ用
-# a3 に パイプの数 (子プロセス数-1) 
+# a3 に パイプの数 (子プロセス数-1)
 # a1 にリダイレクト先ファイル名文字列へのポインタ
 #-------------------------------------------------------------------------
 CheckParseArg:
@@ -3816,7 +3809,7 @@ CheckParseArg:
         addi    a1, a1, 1
         j       1b
     2:
-        beqz    a3, 3f                  # パイプの数 (子プロセス数-1) 
+        beqz    a3, 3f                  # パイプの数 (子プロセス数-1)
         addi    a1, a1, 1               # 配列インデックス
         addi    a3, a3, -1
         j       1b
