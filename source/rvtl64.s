@@ -70,7 +70,7 @@ _start:
         slli    t0, a3, 3           # t0 = a3 * 8
         add     t0, a1, t0          # a6 = a3 * 8 + argvp
         ld      a6, 0(t0)           # a6 = argvp[a3]
-        lb      a6, 0(a6)           # a6 = argvp[a3][0]
+        lbu     a6, 0(a6)           # a6 = argvp[a3][0]
         addi    a3, a3, 1
         li      t0, '-'
         beq     a6, t0, 2f          # 「-」発見
@@ -92,13 +92,13 @@ _start:
         ld      a1, 8(a4)           # argvp
         ld      a0, 0(a1)           # argv[0]
         mv      a5, zero            # cgiflag = 0
-    5:  lb      a6, 0(a0)           # argv[0]の文字列末のゼロを検索
+    5:  lbu     a6, 0(a0)           # argv[0]の文字列末のゼロを検索
         addi    a0, a0, 1           # 文字列の最終文字位置(w)
         bne     a6, zero, 5b        # a1!=0 then 5b
         addi    a0, a0, -2
-    6:  lb      a1, 0(a0)           # argv[0]を逆順で読む
+    6:  lbu     a1, 0(a0)           # argv[0]を逆順で読む
         addi    a0, a0, -1
-        lb      a6, 0(a3)           # 'wltvr' を比較
+        lbu     a6, 0(a3)           # 'wltvr' を比較
         addi    a3, a3, 1
         beq     a6, zero, 7f        # 文字列末まで一致
         bne     a1, a6, 8f          # no
@@ -214,26 +214,26 @@ Launch:         # 初期化終了
 #-------------------------------------------------------------------------
 MainLoop:
         # SIGINTを受信(ctrl-Cの押下)を検出したら初期状態に戻す
-        lb      a2, -5(gp)
+        lbu     a2, -5(gp)
         beqz    a2, 1f                  # SIGINT 受信?
         jal     WarmInit                # 実行停止
         j       3f
 
-    1:  lb      a2, -6(gp)              # 0除算エラー?
+    1:  lbu     a2, -6(gp)              # 0除算エラー?
         beqz    a2, 2f
         la      a0, err_div0            # 0除算メッセージ
         jal     OutAsciiZ
         jal     WarmInit                # 実行停止
 
         # 式中でエラーを検出したらメッセージを表示して停止
-    2:  lb      a2, -7(gp)              # 式中にエラー?
+    2:  lbu     a2, -7(gp)              # 式中にエラー?
         bnez    a2, Exp_Error           # 式中でエラー発生
 
         # 行末をチェック (初期化直後は EOL=1)
     3:  beqz    s1, 4f                  # EOL
 
         # 次行取得 (コンソール入力またはメモリ上のプログラム)
-        lb      a2, -3(gp)              # ExecMode
+        lbu     a2, -3(gp)              # ExecMode
         beqz    a2, ReadLine            # ExecMode=Memory ?
         j       ReadMem                 # メモリから行取得
 
@@ -275,7 +275,7 @@ Exp_Error:
 #-------------------------------------------------------------------------
 ReadLine:
         # 1行入力 : キー入力とファイル入力に対応
-        lb      a0, -4(gp)              # Read from console
+        lbu     a0, -4(gp)              # Read from console
         beqz    a0, 1f                  # コンソールから入力
         jal     READ_FILE               # ファイルから入力
         j       MainLoop
@@ -354,7 +354,7 @@ LoadCode:
         ld      a4, (t0)                # 引数取得
         la      a1, FileName
         li      a2, FNAMEMAX
-    1:  lb      a0, (a4)
+    1:  lbu     a0, (a4)
         sb      a0, (a1)
         beqz    a0, 2f                  # a0=0 then file open
         addi    a4, a4, 1
@@ -420,7 +420,7 @@ GetString2:
         la      a3, FileName
         li      a4, FNAMEMAX
     1:
-        lb      t0, (a0)
+        lbu     t0, (a0)
         sb      t0, (a3)
         beq     t0, zero, 2f
         addi    a0, a0, 1
@@ -559,7 +559,7 @@ TblComm4:
 GetChar:
         li      t0, 1                   # EOL=yes
         beq     s1, t0, 2f
-        lb      tp , (t2)
+        lbu     tp , (t2)
         bne     tp, zero, 1f
         li      s1, 1                   # EOL=yes
     1:  addi    t2, t2, 1
@@ -599,7 +599,7 @@ CheckCGI:
 SyntaxError:
         la      a0, syntaxerr
 Error:  jal     OutAsciiZ
-        lb      a0, -3(gp)
+        lbu     a0, -3(gp)
         beq     a0, zero, 3f            # ExecMode=Direct ?
         lw      a0, 4(t1)               # エラー行行番号
         jal     PrintLeft
@@ -646,21 +646,19 @@ VarStackError_under:
 # スタックへアドレスをプッシュ (行と文末位置を退避)
 #-------------------------------------------------------------------------
 PushLine:
-        addi    sp, sp, -32
-        sd      a2, 24(sp)
-        sd      a1, 16(sp)
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
-        lb      a1, -1(gp)              # LSTACK
+        addi    sp, sp, -16
+        sd      a2,  8(sp)
+        sd      a1,  0(sp)
+        lbu     a1, -1(gp)              # LSTACK
         li      t0, LSTACKMAX
         bge     a1, t0, StackError_over # overflow
         addi    a2, gp, 1024            # (gp + 1024) + LSTACK*8
         slli    t0, a1, 3
         add     t0, a2, t0
-        sd      t1, (t0)                # push t1
+        sd      t1, (t0)                # push line top address
 
         addi    a1, a1, 1               # LSTACK--
-        lb      t0, -1(t2)
+        lbu     t0, -1(t2)
         beqz    t0, 1f                  # 行末処理
         slli    t0, a1, 3
         add     t0, a2, t0
@@ -675,11 +673,9 @@ PushLine:
     2:
         addi    a1, a1, 1               # LSTACK--
         sb      a1, -1(gp)              # LSTACK
-        ld      a2, 24(sp)
-        ld      a1, 16(sp)
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 32
+        ld      a2,  8(sp)
+        ld      a1,  0(sp)
+        addi    sp, sp, 16
         ret
 
 #-------------------------------------------------------------------------
@@ -689,8 +685,8 @@ PushLine:
 PopLine:
         addi    sp, sp, -16
         sd      a2,  8(sp)
-        sd      ra,  0(sp)
-        lb      a1, -1(gp)              # LSTACK
+        sd      a1,  0(sp)
+        lbu     a1, -1(gp)              # LSTACK
         li      t0, 2
         bltu    a1, t0, StackError_under   # underflow
         addi    a1, a1, -1              # LSTACK--
@@ -702,7 +698,7 @@ PopLine:
         addi    a1, a1, -1
         sb      a1, -1(gp)              # LSTACK
         ld      a2,  8(sp)
-        ld      ra,  0(sp)
+        ld      a1,  0(sp)
         addi    sp, sp, 16
         ret
 
@@ -734,11 +730,11 @@ PushValue:
         addi    sp, sp, -16
         sd      a2,  8(sp)
         sd      a1,  0(sp)
-        lb      a1, -1(gp)              # LSTACK
+        lbu     a1, -1(gp)              # LSTACK
         li      t0, LSTACKMAX
         bge     a1, t0, StackError_over
-        addi    a2, gp, 1024            # (gp + 1024) + LSTACK*8
         slli    t0, a1, 3               # t0 = a1 * 8
+        addi    a2, gp, 1024            # (gp + 1024) + LSTACK*8
         add     t0, a2, t0              # t0 = a2 + a1 * 8
         sd      a0, (t0)                # a2 + a1 * 8 <-- a0
         addi    a1, a1, 1               # LSTACK++
@@ -754,7 +750,7 @@ PushValue:
 PeekValue:
         addi    sp, sp, -16
         sd      a1,  0(sp)
-        lb      a0, -1(gp)              # LSTACK
+        lbu     a0, -1(gp)              # LSTACK
         addi    a0, a0, -3              # 行,文末位置の前
         addi    a1, gp, 1024            # (gp + 1024) + LSTACK*8
         slli    t0, a0, 3               # t0 = a0 * 8
@@ -771,7 +767,7 @@ PopValue:
         addi    sp, sp, -16
         sd      a2,  8(sp)
         sd      a1,  0(sp)
-        lb      a1, -1(gp)              # LSTACK
+        lbu     a1, -1(gp)              # LSTACK
         li      t0, 1
         bltu    a1, t0, StackError_under
         addi    a1, a1, -1              # LSTACK--
@@ -883,7 +879,7 @@ Com_GOSUB:
         addi    sp, sp, -16
         sd      a0,  8(sp)
         sd      ra,  0(sp)
-        lb      a0, -3(gp)
+        lbu     a0, -3(gp)
         bnez    a0, 1f                  # ExecMode=Direct ?
         la      a0, no_direct_mode      # エラー表示
         jal     OutAsciiZ
@@ -958,7 +954,7 @@ Com_DO:
         jal     GetChar
         li      t0, '='
         bne     tp, t0, 7f              # DO コマンド
-        lb      tp, (t2)                # PeekChar
+        lbu     tp, (t2)                # PeekChar
         li      t0, '('                 # UNTIL?
         bne     tp, t0, 2f              # ( でなければ NEXT
         jal     SkipCharExp             # (を読み飛ばして式の評価
@@ -978,7 +974,7 @@ Com_DO:
         sd      a0, (a2)                # 制御変数の更新
         mv      a2, a0                  # 更新後の式の値をa2
         jal     PeekValue               # 終了条件を a0 に
-        lb      a1, -8(gp)
+        lbu     a1, -8(gp)
         li      t0, 1                   # 降順 (開始値 > 終了値)
         bne     a1, t0, 4f              # 昇順
 
@@ -992,7 +988,7 @@ Com_DO:
         blt     a3, a0, 6f              # continue
 
     5: # exit ループ終了
-        lb      a1, -1(gp)              # LSTACK=LSTACK-3
+        lbu     a1, -1(gp)              # LSTACK=LSTACK-3
         addi    a1, a1, -3
         sb      a1, -1(gp)              # LSTACK
         ld      a0,  8(sp)
@@ -1001,7 +997,7 @@ Com_DO:
         ret
 
     6: # continue UNTIL
-        lb      a1, -1(gp)              # LSTACK 戻りアドレス
+        lbu     a1, -1(gp)              # LSTACK 戻りアドレス
         addi    a3, a1, -1
 
         slli    t0, a3, 3
@@ -1058,7 +1054,7 @@ SetVar:         # 変数代入
         li      t0, ','                 # FOR文か?
         bne     tp, t0, 3f              # 終了
 
-        lb      t0, -3(gp)              # ExecMode=Direct ?
+        lbu     t0, -3(gp)              # ExecMode=Direct ?
         bnez    t0, 1f                  # 実行時ならOKなのでFOR処理
         la      a0, no_direct_mode      # エラー表示
         jal     OutAsciiZ
@@ -1115,7 +1111,7 @@ SetVar:         # 変数代入
         ld      s0, (s0)                # 変数にはコピー先
         jal     RangeCheck              # コピー先を範囲チェック
         bnez    a2, s_range_err         # 範囲外をアクセス
-        lb      tp , (t2)               # PeekChar
+        lbu     tp , (t2)               # PeekChar
         li      t0, '"                  # "
         bne     tp, t0, s_sp0
 
@@ -1148,7 +1144,7 @@ SetVar:         # 変数代入
         mv      s0, a1                  # コピー先復帰
         bnez    a2, s_range_err         # 範囲外をアクセス
         mv      a2, zero
-    1:  lb      a1, (a0)
+    1:  lbu     a1, (a0)
         sb      a1, (s0)
         addi    a0, a0, 1
         addi    s0, s0, 1
@@ -1265,7 +1261,7 @@ Exp:
         addi    sp, sp, -16
         sd      a1,  8(sp)
         sd      ra,  0(sp)
-        lb      tp , (t2)               # PeekChar
+        lbu     tp , (t2)               # PeekChar
         li      t0, ' '
         bne     tp, t0, e_ok
         li      a1, 1
@@ -1370,7 +1366,7 @@ Exp:
     e_exp7:
         li      t0, '<'                 # <
         bne     tp, t0, e_exp8
-        lb      tp , (t2)               # PeekChar
+        lbu     tp , (t2)               # PeekChar
         li      t0, '='                 # <=
         beq     tp, t0, e_exp71
         li      t0, '>'                 # <>
@@ -1405,7 +1401,7 @@ Exp:
     e_exp8:
         li      t0, '>'                 # >
         bne     tp, t0, e_exp9
-        lb      tp , (t2)               # PeekChar
+        lbu     tp , (t2)               # PeekChar
         li      t0, '='                 # >=
         beq     tp, t0, e_exp81
         li      t0,  '>'                # >>
@@ -1602,7 +1598,7 @@ Factor:
     f_yen:
         li      t0, '\\'                # '\'
         bne     tp, t0, f_rand
-        lb      tp, (t2)                # PeekChar
+        lbu     tp, (t2)                # PeekChar
         li      t0, '\\'                # '\\'
         beq     tp, t0, f_env
 
@@ -1611,7 +1607,7 @@ Factor:
         blt     a0, a2, 2f              # 引数番号 < 引数の数
         ld      a2, argvp               # argvp
         ld      a1, (a2)                # argvp(0)
-    1:  lb      a2, (a1)                # 0を探す
+    1:  lbu     a2, (a1)                # 0を探す
         addi    a1, a1, 1
         bnez    a2, 1b                  # a2!=0 then goto 1b
         addi    a1, a1, -1              # argv(0)のEOLに設定
@@ -1770,7 +1766,7 @@ NumInput:
         la      a1, input2              # 行ワークエリア
         jal     READ_LINE3
         mv      t2, a1
-        lb      tp, (t2)                # 1文字先読み
+        lbu     tp, (t2)                # 1文字先読み
         addi    t2, t2, 1
         jal     Decimal
         mv      t2, a3
@@ -1838,7 +1834,7 @@ CharConst:
 # a1 に数値が返る
 #-------------------------------------------------------------------------
 Hex:
-        lb      tp , (t2)               # check $$
+        lbu     tp , (t2)               # check $$
         li      t0, '$'
         beq     tp, t0, StringInput
         addi    sp, sp, -32
@@ -1957,7 +1953,7 @@ LineEdit:
         addi    t2, t2, 1               # 行内容の書込み先
         addi    t1, t1, 8               # 行番号の後ろの本文へ
     2:
-        lb      a0, (t1)                # ソース行を読み込み
+        lbu      a0, (t1)                # ソース行を読み込み
         sb      a0, (t2)                # 入力バッファにコピー
         addi    t2, t2, 1               # 1文字進める
         addi    t1, t1, 1
@@ -2026,7 +2022,7 @@ List_loop:
         li      a1, 8
     4:
         add     t0, t1, a1
-        lb      a0, (t0)                # コード部分表示
+        lbu     a0, (t0)                # コード部分表示
         beqz    a0, 5f                  # 改行
         jal     OutChar
         addi    a1, a1, 1               # 次の1文字
@@ -2092,7 +2088,7 @@ DebugList:
         li      a1, 8
     2:
         add     t0, t1, a1
-        lb      a0, (t0)                # コード部分表示
+        lbu     a0, (t0)                # コード部分表示
         beq     a0, zero, 3f            # 改行
         jal     OutChar
         addi    a1, a1, 1               # 次の1文字
@@ -2178,7 +2174,7 @@ DumpList:
     2:
         li      a0, ' '
         jal     OutChar
-        lb      a0, (a2)                # 1バイト表示
+        lbu     a0, (a2)                # 1バイト表示
         addi    a2, a2, 1
         jal     PrintHex2
         addi    a3, a3, -1
@@ -2285,7 +2281,7 @@ EditMode:
 LineInsert:
         mv      a1, zero                # 挿入する行のサイズを計算
     1:  add     t0, t2, a1              # t2:入力バッファ先頭
-        lb      a2, (t0)                #
+        lbu     a2, (t0)                #
         addi    a1, a1, 1               # 次の文字
         bnez    a2,  1b
         addi    a1, a1, 12              # 12=4+4+1+3
@@ -2303,7 +2299,7 @@ LineInsert:
         addi    a3, a3, -1              # new &-1 へのコピー
 
     2:  # 挿入位置より後ろを挿入バイト数だけ後方へ移動
-        lb      a5, (a2)                # メモリ後部から移動
+        lbu     a5, (a2)                # メモリ後部から移動
         sb      a5, (a3)
         addi    a2, a2, -1              # old から
         addi    a3, a3, -1              # new へのコピー
@@ -2315,7 +2311,7 @@ LineInsert:
         addi    t1, t1, 8               # 書き込み位置更新
 
     3:  # 入力バッファから挿入
-        lb      a2, (t2)                # t2:入力バッファ
+        lbu     a2, (t2)                # t2:入力バッファ
         sb      a2, (t1)                # t1:挿入位置
         addi    t2, t2, 1
         addi    t1, t1, 1
@@ -2347,7 +2343,7 @@ LineDelete:
         sub     a3, a3, a0              # ヒープ先頭位置更新
         sd      a3, (t0)                # プログラム最終位置更新
         mv      a1, t1
-    1:  lb      a0, (a2)                # a4バイト移動
+    1:  lbu     a0, (a2)                # a4バイト移動
         sb      a0, (a1)
         addi    a2, a2, 1
         addi    a1, a1, 1
@@ -2445,7 +2441,7 @@ PutDecimal:
         addi    a4, a4, -1
         sb      a1, (a4)                # least digit (reminder)
         bnez    a0, 1b                  # done ?
-    2:  lb      a0, (a4)                # most digit
+    2:  lbu     a0, (a4)                # most digit
         addi    a0, a0, '0'             # ASCII
         sb      a0, (t2)                # output a digit
         addi    a4, a4, 1
@@ -2541,7 +2537,7 @@ READ_FILE:
         jal     CheckError
         beqz    a0, 2f                  # EOF ?
 
-        lb      a0, (a1)
+        lbu     a0, (a1)
         li      t0, 10                  # LineFeed ?
         beq     a0, t0, 3f
         addi    a1, a1, 1               # input++
@@ -2767,7 +2763,7 @@ Com_GO:
 .endif
         jal     SkipEqualExp2           # = をチェックした後 式の評価
 Com_GO_go:
-        lb      t0, -3(gp)              # ExecMode=Direct ?
+        lbu     t0, -3(gp)              # ExecMode=Direct ?
         beqz    t0, 4f                  # Directならラベル処理へ
 
 .ifdef VTL_LABEL
@@ -2859,7 +2855,7 @@ LabelScan:
     2:  li      a1, 8                   # テキスト先頭位置
     3:                                  # 空白をスキップ
         add     t0, t1, a1
-        lb      tp , (t0)               # 1文字取得
+        lbu     tp , (t0)               # 1文字取得
         beqz    tp, 7f                  # 行末なら次行
         li      t0, ' '                 # 空白読み飛ばし
         bne     tp, t0, 4f              # ラベル登録へ
@@ -2874,7 +2870,7 @@ LabelScan:
         mv      a2, zero                # ラベル長
     5:
         add     t0, t1, a1
-        lb      tp ,(t0)                # 1文字取得
+        lbu     tp ,(t0)                # 1文字取得
         beqz    tp, 6f                  # 行末
         li      t0 , ' '                # ラベルの区切りは空白
         beq     tp, t0, 6f              # ラベル文字列
@@ -2936,9 +2932,9 @@ LabelSearch:
         mv      a2, zero                # ラベル長
     2:
         add     t0, t2, a2
-        lb      tp , (t0)               # ソース
+        lbu     tp , (t0)               # ソース
         add     t0, a3, a2              # ラベルテーブルの文字
-        lb      a4, (t0)                # テーブルと比較
+        lbu     a4, (t0)                # テーブルと比較
         beqz    a4, 4f                  # テーブル文字列の最後?
         jal     IsAlphaNum
         bgez    a0, 5f                  # tp=space, ip=0
@@ -2981,7 +2977,7 @@ Skip_excess:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
     1:  add     t0, t2, a2
-        lb      tp ,(t0)                # 長過ぎるラベルはスキップ
+        lbu     tp ,(t0)                # 長過ぎるラベルはスキップ
         jal     IsAlphaNum
         bltz    a0, 2f                  # 英数字以外
         addi    a2, a2, 1               # ソース行内の読み込み位置更新
@@ -3029,14 +3025,14 @@ Com_Top:
         ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
-       ret
+        ret
 
     4: # range_err
         jal     RangeError
         ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
-       ret
+        ret
 
 #-------------------------------------------------------------------------
 # コード末マークと空きメモリ先頭を設定 &
@@ -3144,7 +3140,7 @@ Com_VarPush:
         ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
-       ret
+        ret
 
 #-------------------------------------------------------------------------
 # 変数をスタックから復帰
@@ -3242,7 +3238,7 @@ Com_CdWrite:
         li      a1, 8
     2: # code:
         add     t0, a3, a1
-        lb      a0, (t0)                # コード部分書き込み
+        lbu     a0, (t0)                # コード部分書き込み
         beq     a0, zero, 3f            # 行末か? file出力後次行
         sb      a0, (t2)                # Write One Char
         addi    t2, t2, 1
@@ -3283,7 +3279,7 @@ Com_CdWrite:
 Com_CdRead:
         addi    sp, sp, -16
         sd      ra,  0(sp)
-        lb      a0, -4(gp)
+        lbu     a0, -4(gp)
         bnez    a0, 2f
         jal     GetFileName
         jal     fropen                  # open
@@ -3344,7 +3340,7 @@ CheckError:
 Com_FileWrite:
         addi    sp, sp, -16
         sd      ra,  0(sp)
-        lb      tp , (t2)               # check (*=\0
+        lbu     tp , (t2)               # check (*=\0
         li      t0, '*
         bne     tp, t0, 1f
         jal     GetChar
@@ -3382,7 +3378,7 @@ Com_FileWrite:
 Com_FileRead:
         addi    sp, sp, -16
         sd      ra,  0(sp)
-        lb      tp , (t2)               # check )*=\0
+        lbu     tp , (t2)               # check )*=\0
         li      t0, '*
         bne     tp, t0, 1f
         jal     GetChar
@@ -3709,7 +3705,7 @@ ParseArg:
         la      t2, FileName            # コマンド文字列のバッファ
         la      t1, exarg               # ポインタの配列先頭
     1:
-        lb      a0, (t2)
+        lbu     a0, (t2)
         beqz    a0, pa_exit             # 文字列末なら戻る
         li      t0, ' '                 # 連続する空白のスキップ
         bne     a0, t0, 2f              # パイプのチェックへ
@@ -3733,7 +3729,7 @@ ParseArg:
         sd      t2, (t0)                # 引数へのポインタを登録
         addi    a2, a2, 1               # 配列インデックス+1
 
-    5:  lb      a0, (t2)                # 空白を探す
+    5:  lbu     a0, (t2)                # 空白を探す
         beqz    a0, 7f                  # 行末なら終了
         li      t0, ' '                 # 連続する空白のスキップ
         beq     a0, t0, 8f
@@ -4016,12 +4012,12 @@ func_ls:
         la      a2, current_dir         # dir 指定なし
     1:  la      a3, DirName
         mv      a0, a3
-    2:  lb      s4, (a2)                # dir をコピー
+    2:  lbu     s4, (a2)                # dir をコピー
         sb      s4, (a3)
         addi    a2, a2, 1
         addi    a3, a3, 1
         bnez    s4, 2b
-        lb      s4, -2(a3)              # dir末の/をチェック
+        lbu     s4, -2(a3)              # dir末の/をチェック
         li      a2, '/'
         beq     s4, a2, 3f              # / 有
         sb      a2, -1(a3)              # / 書き込み
@@ -4410,7 +4406,7 @@ URL_Decode:
         addi    s4, s4, -1
         mv      s0, zero
     1:
-        lb      s1, (a0)
+        lbu     s1, (a0)
         add     a0, a0, 1
         li      t0, '+'
         bne     s1, t0, 2f
@@ -4425,12 +4421,12 @@ URL_Decode:
         j       4f
     3:
         mv      s1, zero
-        lb      s2, (a0)
+        lbu     s2, (a0)
         add     a0, a0, 1
         jal     IsHexNum
         bltz    a0, 4f
         add     s1, s1, s2
-        lb      s2, (a0)
+        lbu     s2, (a0)
         addi    a0, a0, 1
         jal     IsHexNum
         bltz    a0, 4f
@@ -4473,7 +4469,7 @@ FuncBegin:
         bnez    a2, 4f                  # 範囲外をアクセス
         jal     GetString2              # FileNameにコピー
         j       3f
-    1:  lb      s4, (t2)
+    1:  lbu     s4, (t2)
         li      t0, '"'
         bne     s4, t0, 2f
         jal     GetChar                 # skip "
@@ -4516,7 +4512,7 @@ Oct2Bin:
 # 8進数文字でないかどうかは bhiで判定可能
 #-------------------------------------------------------------------------
 GetOctal:
-        lb      a1, (a0)
+        lbu     a1, (a0)
         addi    a0, a0, 1
         addi    a1, a1, -'0'
         bltz    a1, 1f

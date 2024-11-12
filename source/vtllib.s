@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : vtllib.s
-#  2024/11/10
+#  2024/11/12
 #  Copyright (C) 2003-2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  vtllib.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -214,7 +214,7 @@ RL_insert:
     1:  bgtu    s10, t0, 2f             # while(p=>cp){buf(p)=buf(p-1); p--}
                                         #   if(s10>ip) goto2
         add     a1, s6, t0              #   a1=s6 + s9 - 1
-        lb      a2, -1(a1)
+        lbu     a2, -1(a1)
         sb      a2, (a1)
         addi    t0, t0, -1              #  t0--
         j       1b
@@ -253,7 +253,7 @@ RL_bs:
 RL_delete:
         beq     s10, s9, RL_next_char   # 行末でDELでは何もしない
         add     t0, s6, s10
-        lb      a0, (t0)                #  1文字目確認
+        lbu     a0, (t0)                #  1文字目確認
         andi    a0, a0, 0xC0
         li      t0, 0xC0
         bne     a0, t0, 1f              #  UTF-8の2文字目以降
@@ -262,7 +262,7 @@ RL_delete:
     1:  jal     RL_del1_char            #  1文字削除
         beq     s10, s9, 2f             #  行末なら終了
         add     t0, s6, s10
-        lb      a0, (t0)                #  2文字目文字取得
+        lbu     a0, (t0)                #  2文字目文字取得
         andi    a0, a0, 0xC0
         li      t0, 0x80
         beq     a0, t0, 1b              #  UTF-8 後続文字 (ip==0x80)
@@ -279,7 +279,7 @@ RL_del1_char:                           #  while(p<eol){*p++=*q++;}
         add     a2, s10, s6             #  p
         add     a1, s9, s6              #  eol
         addi    a3, a2, 1               #  q=p+1
-    1:  lb      a0, (a3)                #  *p++ = *q++;
+    1:  lbu     a0, (a3)                #  *p++ = *q++;
         sb      a0, (a2)
         addi    a3, a3, 1
         addi    a2, a2, 1
@@ -315,7 +315,7 @@ cursor_left:
     1:
         addi    s10, s10, -1            #  文字ポインタ-=1
         add     t0, s6, s10
-        lb      a0, (t0)                #  文字取得
+        lbu     a0, (t0)                #  文字取得
         andi    a0, a0, 0xC0
         li      t0, 0x80
         beq     a0, t0, 1b              #  第2バイト以降のUTF-8文字
@@ -542,10 +542,10 @@ check_history:
         li      a3, MAXHISTORY          # no. of history lines
     1:  mv      s6, a4                  # restore input buffer top
         mv      a2, zero                # string top
-    2:  lb      a0, (s6)                # a0 <-- input buffer
+    2:  lbu     a0, (s6)                # a0 <-- input buffer
         addi    s6, s6, 1
         add     t0, s7, a2
-        lb      a1, (t0)                # a1 <-- history line
+        lbu     a1, (t0)                # a1 <-- history line
         bne     a0, a1, 3f              # different char
         beq     a0, zero, 4f            # eol found
         addi    a2, a2, 1               # next char
@@ -612,7 +612,7 @@ history2input:
 
         jal     GetHistory
         mv      a1, a0                  # a1:address
-    1:  lb      a0, (a1)
+    1:  lbu     a0, (a1)
         sb      a0, (s6)
         addi    a1, a1, 1
         addi    s6, s6, 1
@@ -745,7 +745,7 @@ setup_cursor:
         mv      a1, zero
         beq     a1, s10, 4f
     1:  add     a2, s6, a1
-        lb      a0, (a2)
+        lbu     a0, (a2)
         andi    a0, a0, 0xC0
         li      t0, 0x80                # 第2バイト以降のUTF-8文字
         beq     a0, t0, 3f
@@ -859,7 +859,7 @@ FilenameCompletion:
         la      t3, FNArray             # ファイル名へのポインタ配列
         la      t4, PartialName         # 入力バッファ内のポインタ
         jal     ExtractFilename         # 入力バッファからパス名を取得
-        lb      a0, (s6)                # 行頭の文字
+        lbu     a0, (s6)                # 行頭の文字
         beq     a0, zero, 1f            # 行の長さ0？
         jal     GetDirectoryEntry       # ファイル名をコピー
         jal     InsertFileName          # 補完して入力バッファに挿入
@@ -913,14 +913,14 @@ InsertFileName:
         ld      a0, (t3)               # 最初のファイル名と比較
         add     a3, a0, a1             # a3 = FNArray[0]+部分ファイル名長
         add     t0, a3, a2
-        lb      a0, (t0)               # a0 = (FNArray[0] + 一致長 + a2)
+        lbu     a0, (t0)               # a0 = (FNArray[0] + 一致長 + a2)
 
     4:  slli    t0, a4, 3
         add     t0, t3, t0
         ld      s4, (t0)               # s4 = &FNArray(a4)
         add     s4, s4, a1             # s4 = FNArray(a4) + 一致長
         add     t0, s4, a2
-        lb      s4, (t0)               # s4 = FNArray(a4) + 一致長 + a2
+        lbu     s4, (t0)               # s4 = FNArray(a4) + 一致長 + a2
         bne     a0, s4, 5f             # 異なる文字発見
         addi    a4, a4, -1             # 次のファイル名
         bnez    a4, 4b                 # すべてのファイル名で繰り返し
@@ -929,7 +929,7 @@ InsertFileName:
     5:  beq     a2, zero, 9f           # 追加文字なし?
 
     6:                                 # 複数あるが追加補完不可
-        lb      a0, (a3)               # 補完分をコピー
+        lbu     a0, (a3)               # 補完分をコピー
         add     t0, s6, s10
         sb      a0, (t0)               # 入力バッファに追加
         addi    a2, a2, -1
@@ -939,7 +939,7 @@ InsertFileName:
         j       6b                     #
 
     7:  add     t0, s6, s10
-    8:  lb      a0, (a3)               # ファイル名をコピー
+    8:  lbu     a0, (a3)               # ファイル名をコピー
         addi    a3, a3, 1              # 次の文字
         sb      a0, (t0)               # 入力バッファに追加
         addi    t0, t0, 1
@@ -977,7 +977,7 @@ ExtractFilename:
         mv      s8, s7                  # FNBPointer=FileNameBuffer
         mv      s9, zero                # FNCount=0
     1:                                  # 部分パス名の先頭を捜す
-        lb      a0, (a1)                # カーソル位置から前へ
+        lbu     a0, (a1)                # カーソル位置から前へ
         li      t0, 0x20                # 空白はパス名の区切り
         beq     a0, t0, 2f              # 空白なら次の処理
         li      t0, '"'                 # " 二重引用符もパス名の区切り
@@ -987,7 +987,7 @@ ExtractFilename:
         j       1b                      # もう一つ前を調べる
 
     2:  addi    a1, a1, 1               # 発見したら部分パス名の先頭に
-    3:  lb      a0, (a1)
+    3:  lbu     a0, (a1)
         bnez    a0, 4f                  # 行末でなければ 4f へ
         ld      a0,  8(sp)              # 何もない(長さ0)なら終了
         ld      ra,  0(sp)
@@ -995,7 +995,7 @@ ExtractFilename:
         ret 
 
     4:  addi    a3, a3, -1              # 入力済み文字列最終アドレス
-        lb      a0, (a3)                # 入力済みのパスの / を探す
+        lbu     a0, (a3)                # 入力済みのパスの / を探す
         li      t0, '/'
         beq     a0, t0, 5f              # 発見したら5f
         bne     a1, a3, 4b              # 前方にさらに/を探す
@@ -1009,7 +1009,7 @@ ExtractFilename:
         beq     a2, zero, 8f            # ディレクトリ部分がない
 
         mv      s4, s11                 # DirName
-    7:  lb      a0, (a1)                # コピー
+    7:  lbu     a0, (a1)                # コピー
         sb      a0, (s4)                # ディレクトリ名バッファ
         addi    a1, a1, 1
         addi    s4, s4, 1
@@ -1035,7 +1035,7 @@ GetDirectoryEntry:
         sd      a1, 16(sp)
         sd      a0,  8(sp)
         sd      ra,  0(sp)
-        lb      a0, (s11)               # ディレクトリ部分の最初の文字
+        lbu     a0, (s11)               # ディレクトリ部分の最初の文字
         bnez    a0, 1f                  # 長さ 0 か?
         la      a0, current_dir         # ディレクトリ部分がない時
         j       2f
@@ -1111,7 +1111,7 @@ GetFileStat:
         jal     StrLen                  # ディレクトリ名の長さ取得>r1
         beq     a1, zero, 2f
 
-    1:  lb      a4, (a0)                # ディレクトリ名のコピー
+    1:  lbu     a4, (a0)                # ディレクトリ名のコピー
         sb      a4, (s4)                # PathNameに書き込み
         addi    a0, a0, 1
         addi    s4, s4, 1
@@ -1120,7 +1120,7 @@ GetFileStat:
 
     2:  mv      a0, a2                  # ファイル名の長さ取得
         jal     StrLen                  # <r0:アドレス, >r1:文字数
-    3:  lb      a4, (a2)                # ファイル名のコピー
+    3:  lbu     a4, (a2)                # ファイル名のコピー
         sb      a4, (s4)                # PathNameに書き込み
         addi    a2, a2, 1
         addi    s4, s4, 1
@@ -1167,10 +1167,10 @@ CopyFilename:
         mv      a3, a1                  # ファイル名先頭アドレス
         mv      a4, a0                  # ディレクトリフラグ
         ld      a2, (t4)                # t4:PartialName
-    1:  lb      a0, (a2)                # 部分ファイル名
+    1:  lbu     a0, (a2)                # 部分ファイル名
         addi    a2, a2, 1
         beqz    a0, 2f                  # 文字列末?部分ファイル名は一致
-        lb      t0, (a1)                # ファイル名
+        lbu     t0, (a1)                # ファイル名
         addi    a1, a1, 1
         bne     a0, t0, 5f              # 1文字比較  異なれば終了
         j       1b                      # 次の文字を比較
@@ -1189,7 +1189,7 @@ CopyFilename:
         sd      s8, (t0)                # FNArray[FNCount]=s8
         addi    s9, s9, 1               # ファイル名数の更新
 
-    3:  lb      t0, (a3)                # ファイル名のコピー
+    3:  lbu     t0, (a3)                # ファイル名のコピー
         sb      t0, (s8)
         addi    a3, a3, 1
         addi    s8, s8, 1
@@ -1426,7 +1426,7 @@ RealKey:
         ecall
         mv      a4, a0
         beqz    a0, 1f                  # if 0 then empty
-        lb      a4, (a1)                # char code
+        lbu     a4, (a1)                # char code
     1:  li      a1, 1
         sb      a1, VMIN(a3)
         la      a1, new_termios
