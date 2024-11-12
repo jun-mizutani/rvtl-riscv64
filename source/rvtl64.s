@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2024/11/11
+#  2024/11/12
 #  Copyright (C) 2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -863,7 +863,7 @@ WarmInit2:
 WarmInit1:
         #システム変数及び作業用フラグの初期化
         li      a0, 1                   # 1
-        add     t0, gp, '[' * 8         # 範囲チェックON
+        addi    t0, gp, '[' * 8         # 範囲チェックON
         sd      a0, (t0)
         li      s1, 1                   # EOL=yes
         la      a1, exarg               # execve 引数配列初期化
@@ -1135,7 +1135,7 @@ SetVar:         # 変数代入
         mv      tp, zero
         add     t0, s0, a2
         sb      tp , (t0)
-        add     t0, gp, '%' * 8
+        addi    t0, gp, '%' * 8
         sd      a2, (t0)                # コピーされた文字数
         j       s_var_exit
 
@@ -2002,9 +2002,7 @@ ListMore:
 #-------------------------------------------------------------------------
 List:
         bnez    a0, 1f                  # partial
-        li      a1, '='                 # プログラム先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '=' * 8         # プログラム先頭
         ld      t1, (t0)
         j       List_all
 
@@ -2056,17 +2054,13 @@ DebugList:
         sd      a1, 16(sp)
         sd      a0,  8(sp)
         sd      ra,  0(sp)
-        li      a1, '='                 # プログラム先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        addi    t0, gp, '=' * 8         # プログラム先頭
         lw      t1, (t0)
         mv      a0, t1
         jal     PrintHex16              # プログラム先頭表示
         li      a0, ' '
         jal     OutChar
-        li      a1, '&                  # ヒープ先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '&' * 8         # ヒープ先頭
         lw      a0, (t0)
         jal     PrintHex16              # ヒープ先頭表示
         sub     a2, a0, t1              # プログラム領域サイズ
@@ -2170,9 +2164,7 @@ DumpList:
         addi    sp, sp, -16
         sd      tp,  8(sp)
         sd      ra,  0(sp)
-        li      a1, '='                 # プログラム先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '=' * 8         # プログラム先頭
         ld      a2, (t0)
         andi    a2, a2, 0xfffffffffffffff0  # 16byte境界から始める
         li      tp, 16
@@ -2300,9 +2292,7 @@ LineInsert:
         li      t0, 0xfffffffc          # 4バイト境界に整列
         and     a1, a1, t0              # a1:挿入する行のバイト数
 
-        li      a5, '&'                 # ヒープ先頭(コード末+1)
-        slli    t0, a5, 3
-        add     t0, gp, t0
+        add     t0, gp, '&' * 8         # ヒープ先頭(コード末+1)
         ld      a3, (t0)                # ヒープ先頭アドレス
         mv      a2, a3                  # 元のヒープ先頭
         add     a3, a3, a1              # 新ヒープ先頭計算
@@ -2350,9 +2340,7 @@ LineDelete:
 
         lw      a2, (t1)                # 次行オフセット取得
         add     a2, t1, a2              # 次行先頭位置取得
-        li      a0, '&                  # ヒープ先頭
-        slli    t0, a0, 3
-        add     t0, gp, t0
+        add     t0, gp, '&' * 8         # ヒープ先頭
         ld      a3, (t0)                # プログラム最終位置+1
         sub     a0, a2, t1              # 削除バイト数
         sub     a4, a3, a2              # a4:移動バイト数
@@ -2379,9 +2367,7 @@ LineDelete:
 # 同じ行番号があれば a1=1
 #-------------------------------------------------------------------------
 LineSearch:
-        li      a1, '='                 # プログラム先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        addi    t0, gp, '=' * 8         # プログラム先頭
         ld      t1, (t0)
 LineSearch_nextline:
     1:  lw      a1, (t1)                # 次行オフセット
@@ -2785,9 +2771,7 @@ Com_GO_go:
         beqz    t0, 4f                  # Directならラベル処理へ
 
 .ifdef VTL_LABEL
-        li      a1, '^'                 # システム変数「^」のチェック
-        slli    t0, a1, 3
-        add     a1, gp, t0
+        add     a1, gp, '^' * 8         # システム変数「^」のチェック
         ld      a2, (a1)
         beqz    a2, 1f                  # 式中でラベル参照が無い場合は行番号
         mv      t1, a0                  # t1 をラベル行の先頭アドレスへ
@@ -2843,9 +2827,7 @@ Com_GO_go:
 # 式中でのラベル参照結果をクリア(ラベル無効化)
 #-------------------------------------------------------------------------
 ClearLabel:
-        li      a1, '^'                 #
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        addi    t0, gp, '^' * 8
         sd      zero, (t0)              # システム変数「^」クリア
         ret
 
@@ -2863,9 +2845,7 @@ LabelScan:
         sd      a1, 16(sp)
         sd      a0,  8(sp)
         sd      ra,  0(sp)
-        li      a1, '='
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        addi    t0, gp, '=' * 8
         ld      t1, (t0)                # コード先頭アドレス
         lw      tp, (t1)                # コード末なら終了
         addi    tp, tp, 1
@@ -2971,9 +2951,7 @@ LabelSearch:
 
     5:  # found
         ld      a1, 24(a3)              # テーブルからアドレス取得
-        li      a0, '^'                 # システム変数「^」に
-        slli    t0, a0, 3
-        add     t0, gp, t0
+        add     t0, gp, '^' * 8         # システム変数「^」に
         sd      a1, (t0)                # ラベルの次行先頭を設定
         add     t2, t2, a2
         jal     GetChar
@@ -3027,13 +3005,9 @@ Com_Top:
         mv      a3, a0
         jal     RangeCheck              # ',' <= '=' < '*'
         bnez    a2, 4f                  # 範囲外エラー
-        li      a1, '='                 # コード先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '=' * 8         # コード先頭
         sd      a3, (t0)                # 式の値を=に設定 ==a3
-        li      a1, '*'                 # メモリ末
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '*' * 8         # メモリ末
         ld      a2, (t0)                # a2=*
     1: # nextline:                      # コード末検索
         ld      a0, (a3)                # 次行へのオフセット
@@ -3073,17 +3047,13 @@ Com_NEW:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
-        li      a1, '='                 # コード先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '=' * 8         # コード先頭
         ld      a2, (t0)                # &==*8
         li      a0, -1                  # コード末マーク(-1)
         sd      a0, (a2)                # コード末マーク
 Com_NEW_set_end:
         addi    a2, a2, 4               # コード末の次
-        li      a1, '&'                 # 空きメモリ先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '&' * 8         # 空きメモリ先頭
         sd      a2, (t0)                #
         jal     WarmInit1               # 入力デバイス変更なし
         ld      a0,  8(sp)
@@ -3097,34 +3067,26 @@ Com_NEW_set_end:
 #-------------------------------------------------------------------------
 Com_BRK:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         li      a7, sys_brk             # メモリ確保
         ecall
-        li      a1, '*'                 # ヒープ先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '*' * 8         #    メモリ最終位置
         sd      a0, (t0)
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
-       ret
+        ret
 
 #-------------------------------------------------------------------------
 # RANDOM '
 #-------------------------------------------------------------------------
 Com_RANDOM:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
-        li      a1, '`'                 # 乱数シード設定
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        addi    t0, gp, '`' * 8         # 乱数シード設定
         sd      a0, (t0)
         jal     sgenrand
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -3134,14 +3096,10 @@ Com_RANDOM:
 #-------------------------------------------------------------------------
 Com_RCheck:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
-        jal     SkipEqualExp           # = を読み飛ばした後 式の評価
-        li      a1, '['                # 範囲チェック
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        jal     SkipEqualExp            # = を読み飛ばした後 式の評価
+        add     t0, gp, '[' * 8         # 範囲チェック
         sd      a0, (t0)
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -3224,17 +3182,13 @@ Com_VarPop:
 #-------------------------------------------------------------------------
 Com_FileTop:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
-        jal     SkipEqualExp           # = を読み飛ばした後 式の評価
+        jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         mv      s0, a0
-        jal     RangeCheck             # 範囲チェック
-        bnez    a2, 1f                 # Com_FileEnd:1 範囲外をアクセス
-        li      a1, '{'                # ファイル格納域先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
-        sd      a0, (t0)               # ラベル無効化
-        ld      a0,  8(sp)
+        jal     RangeCheck              # 範囲チェック
+        bnez    a2, 1f                  # Com_FileEnd:1 範囲外をアクセス
+        addi    t0, gp, '{' * 8         # ファイル格納域先頭
+        sd      a0, (t0)                # ラベル無効化
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -3244,23 +3198,18 @@ Com_FileTop:
 #-------------------------------------------------------------------------
 Com_FileEnd:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         mv      s0, a0
         jal     RangeCheck              # 範囲チェック
         bnez    a2, 1f                  # 範囲外をアクセス
-        li      a1, '}'                 # ファイル格納域先頭
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        addi    t0, gp, '}' * 8         # ファイル格納域先頭
         sd      a0, (t0)                # ラベル無効化
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
     1: # range_err
         jal     RangeError
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -3269,18 +3218,15 @@ Com_FileEnd:
 # CodeWrite <=
 #-------------------------------------------------------------------------
 Com_CdWrite:
-        addi    sp, sp, -32
-        sd      t2, 16(sp)
-        sd      a0,  8(sp)
+        addi    sp, sp, -16
+        sd      t2,  8(sp)
         sd      ra,  0(sp)
         jal     GetFileName
         jal     fwopen                  # open
         bgez    a0, 4f                  # exit
         bltz    a0, 5f                  # error
         sd      a0, -24(gp)             # FileDescW
-        li      a1, '='
-        slli    t0, a1, 3
-        add     t0, gp, t0
+        add     t0, gp, '=' * 8
         ld      a3, (t0)   # コード先頭アドレス
 
     1: # loop
@@ -3323,10 +3269,9 @@ Com_CdWrite:
         ld      a0, -24(gp)             # FileDescW
         jal     fclose                  # ファイルクローズ
         li      s1, 1                   # EOL=yes
-        ld      t2, 16(sp)
-        ld      a0,  8(sp)
+        ld      t2,  8(sp)
         ld      ra,  0(sp)
-        addi    sp, sp, 32
+        addi    sp, sp, 16
         ret
 
     5: # error:
@@ -3337,7 +3282,6 @@ Com_CdWrite:
 #-------------------------------------------------------------------------
 Com_CdRead:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
         lb      a0, -4(gp)
         bnez    a0, 2f
@@ -3350,7 +3294,6 @@ Com_CdRead:
         sb      a1, -4(gp)              # Read from file
         mv      s1, a1                  # EOL
     1: # exit
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -3379,10 +3322,8 @@ CheckError:
         sd      a1, 16(sp)
         sd      a0,  8(sp)
         sd      ra,  0(sp)
-        li      a1, '|'                 # 返り値を | に設定
-        slli    t0, a1, 3
-        add     t0, gp, t0
-        sd      a0, (gp)
+        addi    t0, gp, '|' * 8         # 返り値を | に設定
+        sd      a0, (t0)
 .ifdef  DETAILED_MSG
         jal     SysCallError
 .else
@@ -3402,7 +3343,6 @@ CheckError:
 #-------------------------------------------------------------------------
 Com_FileWrite:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
         lb      tp , (t2)               # check (*=\0
         li      t0, '*
@@ -3421,13 +3361,9 @@ Com_FileWrite:
         bltz    a0, SYS_Error
         sd      a0, -24(gp)             # FileDescW
 
-        li      a2, '{'                 # 格納領域先頭
-        slli    t0, a2, 3
-        add     t0, gp, t0
+        addi    t0, gp, '{' * 8         # 格納領域先頭
         ld      a1, (t0)                # バッファ指定
-        li      a2, '}'                 # 格納領域最終
-        slli    t0, a2, 3
-        add     t0, gp, t0
+        addi    t0, gp, '}' * 8         # 格納領域最終
         ld      a3, (t0)                #
         bltu    a3, a1, 3f
         sub     a2, a3, a1              # 書き込みサイズ
@@ -3436,7 +3372,6 @@ Com_FileWrite:
         ecall
         jal     fclose
     3: # exit:
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -3446,10 +3381,9 @@ Com_FileWrite:
 #-------------------------------------------------------------------------
 Com_FileRead:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
         lb      tp , (t2)               # check )*=\0
-        li     t0, '*
+        li      t0, '*
         bne     tp, t0, 1f
         jal     GetChar
         jal     GetChar
@@ -3475,22 +3409,14 @@ Com_FileRead:
         li      a7, sys_lseek           # ファイル先頭にシーク
         ecall
 
-        li      a0, '{'                 # 格納領域先頭
-        slli    t0, a0, 3
-        add     t0, gp, t0
+        addi    t0, gp, '{' * 8         # 格納領域先頭
         ld      a1, (t0)                # バッファ指定
-        li      a0, ')'
-        slli    t0, a0, 3
-        add     t0, gp, t0
+        add     t0, gp, ')' * 8
         sd      a3, (t0)                # 読み込みサイズ設定
         add     a2, a1, a3              # 最終アドレス計算
-        li      a0, '}'
-        slli    t0, a0, 3
-        add     t0, gp, t0
-        sd     a2, (t0)                 # 格納領域最終設定
-        li      a0, '*'
-        slli    t0, a0, 3
-        add     t0, gp, t0
+        add     t0, gp, '}' * 8
+        sd      a2, (t0)                # 格納領域最終設定
+        add     t0, gp, '*' * 8
         ld      a3, (t0)                # RAM末
         bltu    a3, a1, 3f              # a3<a1 領域不足エラー
 
@@ -3502,7 +3428,6 @@ Com_FileRead:
         jal     fclose
         bltz    a2, SYS_Error           # Read Error
     3: # exit
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -3520,14 +3445,12 @@ Com_Exit:       #   7E  ~  VTL終了
 #-------------------------------------------------------------------------
 Com_Ext:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
 .ifndef SMALL_VTL
 .include        "ext.s"
 func_err:
         j       pop_and_Error
 .endif
-        ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -4647,7 +4570,7 @@ mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
                 .align  2
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/11,(C)2024 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/12,(C)2024 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
                 .align  2
