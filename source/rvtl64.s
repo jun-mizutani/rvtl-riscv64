@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2024/11/12
+#  2024/11/14
 #  Copyright (C) 2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -2484,7 +2484,7 @@ IsAlpha:
         addi    sp, sp, -16
         sd      ra,  0(sp)
         jal     IsAlpha1                # A - Z ?
-        bge     a0, zero, 1f            # yes return a0=0
+        beqz    a0, 1f                  # yes return a0=0
         jal     IsAlpha2                # a - z ?
     1:  ld      ra,  0(sp)              # yes return a0=0
         addi    sp, sp, 16
@@ -2514,7 +2514,7 @@ IsAlphaNum:
         addi    sp, sp, -16
         sd      ra,  0(sp)
         jal     IsAlpha                 # 英文字なら a0=0
-        bltz    a0, 1f
+        beqz    a0, 1f
         jal     IsNum                   # 数字か? a0=数値
     1:  ld      ra,  0(sp)
         addi    sp, sp, 16
@@ -2925,26 +2925,25 @@ LabelSearch:
         sd      a4,  8(sp)
         sd      ra,  0(sp)
         la      a3, LabelTable          # ラベルテーブル先頭
-        la      t0, TablePointer
-        ld      a1, (t0)                # テーブル最終登録位置
+        la      a6, TablePointer
+        ld      a5, (a6)                # テーブル最終登録位置
 
     1:
         mv      a2, zero                # ラベル長
     2:
-        add     t0, t2, a2
-        lbu     tp , (t0)               # ソース
-        add     t0, a3, a2              # ラベルテーブルの文字
-        lbu     a4, (t0)                # テーブルと比較
-        beqz    a4, 4f                  # テーブル文字列の最後?
-        jal     IsAlphaNum
-        bgez    a0, 5f                  # tp=space, ip=0
-
+        add     t0, t2, a2              # 読み取り中のソース位置
+        lbu     tp, (t0)                # ソース1文字取得
+        add     t0, a3, a2              # ラベルテーブルの文字位置
+        lbu     a4, (t0)                # ラベルテーブルの1文字
+        bnez    a4, 3f                  # ラベル文字列の最後でないか
+        jal     IsAlphaNum              # tp が[AZaz09] なら a0>=0
+        bltz    a0, 5f                  # 入力が英数字以外ならラベル発見
     3:  bne     tp, a4, 6f              # 一致しない場合は次のラベル
         addi    a2, a2, 1               # 一致したら次の文字
-        li      t0, 23                  # 長さのチェック
-        bne     a2, t0, 2b              # 23文字でなければ次の文字を比較
-    4:  jal     Skip_excess             # 長過ぎるラベルは後ろを読み飛ばし
+        li      t0, 24                  # 長さのチェック
+        ble     a2, t0, 2b              # 24文字未満なら次の文字を比較
 
+    4:  jal     Skip_excess             # 長過ぎるラベルは後ろを読み飛ばし
     5:  # found
         ld      a1, 24(a3)              # テーブルからアドレス取得
         add     t0, gp, '^' * 8         # システム変数「^」に
@@ -2958,9 +2957,9 @@ LabelSearch:
         ret
 
     6:  # next
-        addi    a3, a3, 32              # テーブルの最終エントリ
-        beq     a3, a1, 7f              # 見つからない場合
-        beq     a3, a0, 7f              # テーブル領域最終?
+        beq     a3, a5, 7f              # 最終エントリまで比較
+        addi    a3, a3, 32
+        beq     a3, a6, 7f              # テーブル領域最終?
         j       1b                      # 次のテーブルエントリ
 
     7:  # not found:
@@ -4566,7 +4565,7 @@ mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
                 .align  2
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/12,(C)2024 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/14,(C)2024 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
                 .align  2
