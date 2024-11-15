@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2024/11/14
+#  2024/11/15
 #  Copyright (C) 2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -1910,9 +1910,9 @@ IsHex2:
 IsHexNum:
         addi    sp, sp, -16
         sd      ra,  0(sp)
-        jal     IsHex                   # Hexか?
-        bgez    a0, 1f                  # yes
         jal     IsNum2                  # 数字か?
+        bgez    a0, 1f                  # yes
+        jal     IsHex                   # Hexか?
     1:  ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
@@ -2759,7 +2759,7 @@ Com_GO:
         li      t0, '!'
         beq     tp, t0, 2f              # #! はコメント、次行移動
 .ifdef VTL_LABEL
-        jal     ClearLabel              
+        jal     ClearLabel
 .endif
         jal     SkipEqualExp2           # = をチェックした後 式の評価
 Com_GO_go:
@@ -3780,90 +3780,61 @@ func_c:
         li      t0, 'c'
         bne     tp, t0, func_d
         jal     def_func_c              # |c
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_d:
 func_e:
         li      t0, 'e'
         bne     tp, t0, func_f
         jal     def_func_e              # |e
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_f:
         li      t0, 'f'
         bne     tp, t0, func_l
         jal     def_func_f              # |f
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_l:
         li      t0, 'l'
         bne     tp, t0, func_m
         jal     def_func_l              # |l
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_m:
         li      t0, 'm'
         bne     tp, t0, func_n
         jal     def_func_m              # |m
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_n:
 func_p:
         li      t0, 'p'
         bne     tp, t0, func_q
         jal     def_func_p              # |p
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_q:
 func_r:
         li      t0, 'r'
         bne     tp, t0, func_s
         jal     def_func_r              # |r
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_s:
         li      t0, 's'
         bne     tp, t0, func_t
         jal     def_func_s              # |s
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_t:
 func_u:
         li      t0, 'u'
         bne     tp, t0, func_v
         jal     def_func_u              # |u
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_v:
         li      t0, 'v'
         bne     tp, t0, func_z
         jal     def_func_v              # |u
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return
 func_z:
         li      t0, 'z'
         bne     tp, t0, pop_and_Error
         jal     def_func_z              # |z
+func_return:
         ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
@@ -3893,10 +3864,7 @@ func_ca:
         jal     FuncBegin
         ld      a0, (a1)                # filename
         jal     DispFile
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 func_cd:
         la      a0, msg_f_cd            # |cd path
         jal     FuncBegin
@@ -3907,10 +3875,7 @@ func_cd:
         li      a7, sys_chdir           # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 func_cm:
         la      a0, msg_f_cm            # |cm 644 file
         jal     FuncBegin
@@ -3921,10 +3886,7 @@ func_cm:
         li      a7, sys_chmod           # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 func_cr:
         la      a0, msg_f_cr            # |cr path
         jal     FuncBegin
@@ -3935,10 +3897,7 @@ func_cr:
         li      a7, sys_chroot          # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 func_cw:
         la      a0, msg_f_cw            # |cw
         jal     OutAsciiZ
@@ -3951,10 +3910,7 @@ func_cw:
         mv      a0, a3                  # restore a0
         jal     OutAsciiZ
         jal     NewLine
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 #------------------------------------
 # |e で始まる組み込みコマンド
@@ -3978,10 +3934,7 @@ func_ex:
         ecall
         jal     CheckError              # 正常ならここには戻らない
         jal     SET_TERMIOS             # 端末のローカルエコーをOFF
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 #------------------------------------
 # |f で始まる組み込みコマンド
@@ -4072,10 +4025,7 @@ func_ls:
         ld      t1,  8(sp)
         ld      tp,  0(sp)
         addi    sp, sp, 32
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 #------------------------------------
 # |m で始まる組み込みコマンド
@@ -4106,10 +4056,7 @@ func_md:
         li      a7, sys_mkdir           # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 c755:   .long   0755
 
@@ -4129,10 +4076,7 @@ func_mo:
         li      a7, sys_mount           # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 func_mv:
         la      a0, msg_f_mv            # |mv fileold filenew
         jal     FuncBegin
@@ -4141,10 +4085,7 @@ func_mv:
         li      a7, sys_rename          # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 #------------------------------------
 # |p で始まる組み込みコマンド
@@ -4166,10 +4107,7 @@ func_pv:
         li      a7, sys_pivot_root      # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 #------------------------------------
 # |r で始まる組み込みコマンド
@@ -4194,10 +4132,7 @@ func_rd:
         li      a7, sys_rmdir           # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 func_rm:
         la      a0, msg_f_rm            # |rm path
@@ -4208,10 +4143,7 @@ func_rm:
         li      a7, sys_unlinkat        # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 AT_FDCWD =  -100
 
@@ -4221,10 +4153,7 @@ func_rt:                                # reset terminal
         jal     SET_TERMIOS2            # cooked mode
         jal     GET_TERMIOS             # termios の保存
         jal     SET_TERMIOS             # raw mode
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 #------------------------------------
 # |s で始まる組み込みコマンド
@@ -4249,10 +4178,7 @@ func_sf:
         li      a7, sys_swapoff         # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 func_so:
         la      a0, msg_f_so            # |so dev_name
@@ -4262,20 +4188,14 @@ func_so:
         li      a7, sys_swapon          # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 func_sy:
         la      a0, msg_f_sy            # |sy
         li      a7, sys_sync            # system call
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 #------------------------------------
 # |u で始まる組み込みコマンド
@@ -4298,10 +4218,7 @@ func_um:
         li      a7, sys_umount          # sys_oldumount システムコール
         ecall
         jal     CheckError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 func_ud:
         addi    t0, gp, 'u' * 8
@@ -4311,10 +4228,7 @@ func_ud:
         ld      a2, 16(s4)              # a2 にデコード後の文字列先頭を設定
         jal     URL_Decode
         sd      a0, 24(s4)              # デコード後の文字数を設定
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 #------------------------------------
 # |v で始まる組み込みコマンド
@@ -4336,18 +4250,12 @@ func_ve:
         sd      a3, (t0)                # バージョン設定
         li      a3, VERSION64
         sd      a3, 4(a1)               # 64bit
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 func_vc:
         li      a3, CPU
         addi    t0, gp, '%' * 8
         sd      a3, (t0)                # cpu
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 version:
         .long   VERSION
@@ -4371,15 +4279,13 @@ func_zc:
         ld      a3, (a1)
         add     t0, gp, '%' * 8
         sd      a3, (t0)                # cpu
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       func_return2
 
 func_zz:
         jal     GetChar                 # skip space
         jal     SystemCall
         jal     CheckError
+func_return2:
         ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
@@ -4401,45 +4307,47 @@ URL_Decode:
         sd      s1, 16(sp)
         sd      s0,  8(sp)
         sd      ra,  0(sp)
-        add     s4, a0, a1
-        addi    s4, s4, -1
+        mv      a3, a0                  # top of input buffer
+        add     s4, a3, a1
+        addi    s4, s4, -1              # end of input encoded string
         mv      s0, zero
     1:
-        lbu     s1, (a0)
-        add     a0, a0, 1
-        li      t0, '+'
-        bne     s1, t0, 2f
-        li      s1, ' '
+        lbu     s1, (a3)                # get 1 byte
+        add     a3, a3, 1
+        li      t0, '+'                 # "space" inside query-string
+        bne     s1, t0, 2f              # if s1!='+', goto 2f
+        li      s1, ' '                 # s1 = ' '
         add     t0, a2, s0
-        sb      s1, (t0)
-        j       4f
+        sb      s1, (t0)                # output space
+        j       4f                      # next input char
     2:  li      t0, '%'
-        beq     s1, t0, 3f
+        beq     s1, t0, 3f              # if % encoded, goto 3f
         add     t0, a2, s0
-        sb      s1, (t0)
-        j       4f
-    3:
-        mv      s1, zero
-        lbu     s2, (a0)
-        add     a0, a0, 1
-        jal     IsHexNum
-        bltz    a0, 4f
-        add     s1, s1, s2
-        lbu     s2, (a0)
-        addi    a0, a0, 1
-        jal     IsHexNum
-        bltz    a0, 4f
+        sb      s1, (t0)                # output character as it is
+        j       4f                      # next input char
+
+    3:  mv      s1, zero                # % decode
+        lbu     s2, (a3)                # a character next to %
+        add     a3, a3, 1
+        jal     IsHexNum                # return value or -1 in a0
+        bltz    a0, 4f                  # if not hexadecimal, next char
+
+        add     s1, s1, a0
+        lbu     s2, (a3)                # Skip one, the next byte
+        addi    a3, a3, 1
+        jal     IsHexNum                # return value or -1 in a0
+        bltz    a0, 4f                  # if not hexadecimal, next char
         slli    s1, s1, 4
-        add     s1, s1, s2
+        add     s1, s1, a0
         add     t0, a2, s0
-        sb      s1, (t0)
+        sb      s1, (t0)                # output the % decoded byte
     4:
-        addi    s0, s0, 1
-        ble     a0, s4, 1b
+        addi    s0, s0, 1               # next input char
+        ble     a3, s4, 1b
 
         add     t0, a2, s0
-        sb      zero, (t0)
-        mv      a0, s0                # 文字数を返す
+        sb      zero, (t0)              # mark end of line
+        mv      a0, s0                  # return length
         ld      s4, 40(sp)
         ld      s3, 32(sp)
         ld      s2, 24(sp)
@@ -4565,7 +4473,7 @@ mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
                 .align  2
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/14,(C)2024 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/15,(C)2024 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
                 .align  2
