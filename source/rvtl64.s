@@ -51,68 +51,68 @@ _start:
 # システムの初期化
 #-------------------------------------------------------------------------
         # コマンドライン引数の数をスタックから取得し、[argc] に保存
-        ld      a5, 0(sp)           # a5 = argc
-        la      a4, argc            # argc 引数の数を保存
-        sd      a5, 0(a4)           # argc
-        addi    a1, sp, 8           # argvp
-        sd      a1, 8(a4)           # argvp 引数配列先頭を保存
+        ld      a5, (sp)                # a5 = argc
+        la      a4, argc                # argc 引数の数を保存
+        sd      a5, (a4)                # argc
+        addi    a1, sp, 8               # argvp
+        sd      a1, 8(a4)               # argvp 引数配列先頭を保存
 
         # 環境変数格納アドレスをスタックから取得し、[envp] に保存
         addi    t0, a5, 2
-        slli    t0, t0, 3           # t0 = (argc + 2) * 8
-        add     a2, sp, t0          # a2 = sp + argc * 8
-        sd      a2, 16(a4)          # envp 環境変数領域の保存
+        slli    t0, t0, 3               # t0 = (argc + 2) * 8
+        add     a2, sp, t0              # a2 = sp + argc * 8
+        sd      a2, 16(a4)              # envp 環境変数領域の保存
 
         # コマンドラインの引数を走査
         li      a3, 1
-        beq     a5, a3, 4f          # 引数なしならスキップ
+        beq     a5, a3, 4f              # 引数なしならスキップ
     1:
-        slli    t0, a3, 3           # t0 = a3 * 8
-        add     t0, a1, t0          # a6 = a3 * 8 + argvp
-        ld      a6, 0(t0)           # a6 = argvp[a3]
-        lbu     a6, 0(a6)           # a6 = argvp[a3][0]
+        slli    t0, a3, 3               # t0 = a3 * 8
+        add     t0, a1, t0              # a6 = a3 * 8 + argvp
+        ld      a6, (t0)                # a6 = argvp[a3]
+        lbu     a6, (a6)                # a6 = argvp[a3][0]
         addi    a3, a3, 1
         li      t0, '-'
-        beq     a6, t0, 2f          # 「-」発見
+        beq     a6, t0, 2f              # 「-」発見
         bne     a3, a5, 1b
-        j       3f                  # 「-」なし
+        j       3f                      # 「-」なし
     2:
-        addi    a6, a3, -1          # rvtl用の引数の数
-        sd      a6, 0(a4)           # argc 引数の数を更新
+        addi    a6, a3, -1              # rvtl用の引数の数
+        sd      a6, (a4)                # argc 引数の数を更新
 
-    3:  slli    t0, a3, 3           # t0 = a3 * 8
-        add     a6, a1, t0          # t0 = a3 * 8 + argvp
-        sd      a6, 32(a4)          # vtl用の引数文字列配列先頭(argvp_vtl)
+    3:  slli    t0, a3, 3               # t0 = a3 * 8
+        add     a6, a1, t0              # t0 = a3 * 8 + argvp
+        sd      a6, 32(a4)              # vtl用の引数文字列配列先頭(argvp_vtl)
         sub     a3, a5, a3
-        sd      a3, 24(a4)          # vtl用の引数の個数 (argc_vtl)
+        sd      a3, 24(a4)              # vtl用の引数の個数 (argc_vtl)
 
     4:  # argv[0]="xxx/rvtlw" ならば cgiモード
         mv      a2, zero
-        la      a3, cginame         # 文字列 'wltvr',0
-        ld      a1, 8(a4)           # argvp
-        ld      a0, 0(a1)           # argv[0]
-        mv      a5, zero            # cgiflag = 0
-    5:  lbu     a6, 0(a0)           # argv[0]の文字列末のゼロを検索
-        addi    a0, a0, 1           # 文字列の最終文字位置(w)
-        bne     a6, zero, 5b        # a1!=0 then 5b
+        la      a3, cginame             # 文字列 'wltvr',0
+        ld      a1, 8(a4)               # argvp
+        ld      a0, (a1)                # argv[0]
+        mv      a5, zero                # cgiflag = 0
+    5:  lbu     a6, (a0)                # argv[0]の文字列末のゼロを検索
+        addi    a0, a0, 1               # 文字列の最終文字位置(w)
+        bne     a6, zero, 5b            # a1!=0 then 5b
         addi    a0, a0, -2
-    6:  lbu     a1, 0(a0)           # argv[0]を逆順で読む
+    6:  lbu     a1, (a0)                # argv[0]を逆順で読む
         addi    a0, a0, -1
-        lbu     a6, 0(a3)           # 'wltvr' を比較
+        lbu     a6, (a3)                # 'wltvr' を比較
         addi    a3, a3, 1
-        beq     a6, zero, 7f        # 文字列末まで一致
-        bne     a1, a6, 8f          # no
+        beq     a6, zero, 7f            # 文字列末まで一致
+        bne     a1, a6, 8f              # no
         j       6b
-    7:  li      a4, 1               # cgiflag = 1
+    7:  li      a4, 1                   # cgiflag = 1
     8:  la      a3, cgiflag
-        sd      a4, 0(a3)           # set cgiflag=1, cgiモード
+        sd      a4, (a3)                # set cgiflag=1, cgiモード
 
         # gp に変数領域の先頭アドレスを設定、変数のアクセスはgpを使う
-        la      gp, VarArea         # gp の内容は常に VarArea
+        la      gp, VarArea             # gp の内容は常に VarArea
 
         # システム変数の初期値を設定
-        mv      a0, zero            # 0 を渡して現在値を得る
-        li      a7, sys_brk         # brk取得
+        mv      a0, zero                # 0 を渡して現在値を得る
+        li      a7, sys_brk             # brk取得
         ecall
         mv      t2, a0                  # 初期brk値
         addi    t0, gp, ',' * 8         # プログラム先頭 (,)
@@ -142,7 +142,7 @@ _start:
         mv      a1, zero                # シグナルハンドラ設定
         la      a4, new_sig
         la      a0, SigIntHandler
-        sd      a0, 0(a4)               # nsa_sighandler
+        sd      a0, (a4)                # nsa_sighandler
         sd      a1, 8(a4)               # nsa_mask
         li      a0, SA_NOCLDSTOP        # 子プロセス停止を無視
         li      a1, SA_RESTORER
@@ -159,7 +159,7 @@ _start:
         ecall
 
         li      a0, SIG_IGN             # シグナルの無視
-        sd      a0, 0(a4)               # nsa_sighandler
+        sd      a0, (a4)                # nsa_sighandler
         li      a0, SIGTSTP             # ^Z
         li      a7, sys_rt_sigaction
         ecall
@@ -207,7 +207,7 @@ _start:
 Launch:         # 初期化終了
         la      a1, save_stack
         mv      a0, sp
-        sd      a0, 0(a1)               # スタックを保存
+        sd      a0, (a1)                # スタックを保存
 
 #-------------------------------------------------------------------------
 # メインループ
@@ -323,10 +323,10 @@ ReadMem:
 #-------------------------------------------------------------------------
 SigIntHandler:
         addi    sp, sp, -16
-        sd      a0,  0(sp)
+        sd      a0, (sp)
         li      a0, 1                   # SIGINT シグナル受信
         sb      a0, -5(gp)              # gpは常に同じ値
-        ld      a0,  0(sp)
+        ld      a0, (sp)
         addi    sp, sp, 16
         ret
 
@@ -341,7 +341,7 @@ SigReturn:
 #-------------------------------------------------------------------------
 LoadCode:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         la      a3, current_arg         # 処理済みの引数
         ld      a2, (a3)
         addi    a2, a2, 1               # カウントアップ
@@ -371,7 +371,7 @@ LoadCode:
         sb      a0, -4(gp)              # Read from file(1)
         li      s1, 1                   # EOL=yes
     3:
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -403,7 +403,7 @@ GetString:
         ld      a3, 24(sp)
         ld      a2, 16(sp)
         ld      a1,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -415,7 +415,7 @@ GetString2:
         sd      a4, 24(sp)
         sd      a3, 16(sp)
         sd      a2,  8(sp)
-        sd      a0,  0(sp)
+        sd      a0, (sp)
         mv      a2, zero
         la      a3, FileName
         li      a4, FNAMEMAX
@@ -431,7 +431,7 @@ GetString2:
         ld      a4, 24(sp)
         ld      a3, 16(sp)
         ld      a2,  8(sp)
-        ld      a0,  0(sp)
+        ld      a0, (sp)
         addi    sp, sp, 32
         ret
 
@@ -441,7 +441,7 @@ GetString2:
 #-------------------------------------------------------------------------
 GetFileName:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar                 # skip =
         li      t0, '='
         bne     tp, t0, 2f              # エラー
@@ -452,7 +452,7 @@ GetFileName:
     1: # file
         jal     GetString
         la      a0, FileName            # ファイル名表示
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
     2: # error
@@ -559,7 +559,7 @@ TblComm4:
 GetChar:
         li      t0, 1                   # EOL=yes
         beq     s1, t0, 2f
-        lbu     tp , (t2)
+        lbu     tp, (t2)
         bne     tp, zero, 1f
         li      s1, 1                   # EOL=yes
     1:  addi    t2, t2, 1
@@ -590,7 +590,7 @@ CheckCGI:
         la      a3, cgiflag
         ld      a3, (a3)
         li      t0, 1
-        beq     a3, t0, Com_Exit       # CGI mode ?
+        beq     a3, t0, Com_Exit        # CGI mode ?
         ret
 
 #-------------------------------------------------------------------------
@@ -638,7 +638,7 @@ VarStackError_under:
     1:  jal     OutAsciiZ
         jal     WarmInit
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -648,7 +648,7 @@ VarStackError_under:
 PushLine:
         addi    sp, sp, -16
         sd      a2,  8(sp)
-        sd      a1,  0(sp)
+        sd      a1, (sp)
         lbu     a1, -1(gp)              # LSTACK
         li      t0, LSTACKMAX
         bge     a1, t0, StackError_over # overflow
@@ -674,7 +674,7 @@ PushLine:
         addi    a1, a1, 1               # LSTACK--
         sb      a1, -1(gp)              # LSTACK
         ld      a2,  8(sp)
-        ld      a1,  0(sp)
+        ld      a1, (sp)
         addi    sp, sp, 16
         ret
 
@@ -685,7 +685,7 @@ PushLine:
 PopLine:
         addi    sp, sp, -16
         sd      a2,  8(sp)
-        sd      a1,  0(sp)
+        sd      a1, (sp)
         lbu     a1, -1(gp)              # LSTACK
         li      t0, 2
         bltu    a1, t0, StackError_under   # underflow
@@ -698,7 +698,7 @@ PopLine:
         addi    a1, a1, -1
         sb      a1, -1(gp)              # LSTACK
         ld      a2,  8(sp)
-        ld      a1,  0(sp)
+        ld      a1, (sp)
         addi    sp, sp, 16
         ret
 
@@ -712,14 +712,12 @@ StackError_over:
 StackError_under:
         la      a0, stkunder
     1:  addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     OutAsciiZ
         jal     WarmInit
         ld      a2, 24(sp)
         ld      a1, 16(sp)
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -729,7 +727,7 @@ StackError_under:
 PushValue:
         addi    sp, sp, -16
         sd      a2,  8(sp)
-        sd      a1,  0(sp)
+        sd      a1, (sp)
         lbu     a1, -1(gp)              # LSTACK
         li      t0, LSTACKMAX
         bge     a1, t0, StackError_over
@@ -740,7 +738,7 @@ PushValue:
         addi    a1, a1, 1               # LSTACK++
         sb      a1, -1(gp)              # LSTACK
         ld      a2,  8(sp)
-        ld      a1,  0(sp)
+        ld      a1, (sp)
         addi    sp, sp, 16
         ret
 
@@ -749,14 +747,14 @@ PushValue:
 #-------------------------------------------------------------------------
 PeekValue:
         addi    sp, sp, -16
-        sd      a1,  0(sp)
+        sd      a1, (sp)
         lbu     a0, -1(gp)              # LSTACK
         addi    a0, a0, -3              # 行,文末位置の前
         addi    a1, gp, 1024            # (gp + 1024) + LSTACK*8
         slli    t0, a0, 3               # t0 = a0 * 8
         add     t0, a1, t0              # t0 = a2 + a0 * 8
         ld      a0, (t0)                # a2 + a0 * 8 --> a0
-        ld      a1,  0(sp)
+        ld      a1, (sp)
         addi    sp, sp, 16
         ret
 
@@ -766,7 +764,7 @@ PeekValue:
 PopValue:
         addi    sp, sp, -16
         sd      a2,  8(sp)
-        sd      a1,  0(sp)
+        sd      a1, (sp)
         lbu     a1, -1(gp)              # LSTACK
         li      t0, 1
         bltu    a1, t0, StackError_under
@@ -777,7 +775,7 @@ PopValue:
         ld      a0, (t0)                # a2 + a1 * 8 --> a0
         sb      a1, -1(gp)              # LSTACK
         ld      a2,  8(sp)
-        ld      a1,  0(sp)
+        ld      a1, (sp)
         addi    sp, sp, 16
         ret
 
@@ -787,7 +785,7 @@ PopValue:
 DispPrompt:
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     WinSize
         srli    a0, a0, 16              # 桁数
         li      t0, 48
@@ -804,7 +802,7 @@ DispPrompt:
         la      a0, prompt2             # プロンプト表示
         jal     OutAsciiZ
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -816,7 +814,7 @@ DispPrompt:
         la      a0, prompt2             # プロンプト表示
         jal     OutAsciiZ
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -826,7 +824,7 @@ DispPrompt:
 RangeError:
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         la      a0, Range_msg           # 範囲エラーメッセージ
         jal     OutAsciiZ
         addi    t0, gp, '#' * 8         # 行番号
@@ -840,7 +838,7 @@ RangeError:
         jal     NewLine
         jal     WarmInit
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -849,9 +847,9 @@ RangeError:
 #-------------------------------------------------------------------------
 WarmInit:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     CheckCGI
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
 WarmInit2:
         # コマンド入力元をコンソールに設定
@@ -877,8 +875,7 @@ WarmInit1:
 #-------------------------------------------------------------------------
 Com_GOSUB:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         lbu     a0, -3(gp)
         bnez    a0, 1f                  # ExecMode=Direct ?
         la      a0, no_direct_mode      # エラー表示
@@ -894,8 +891,7 @@ Com_GOSUB:
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         jal     PushLine
         jal     Com_GO_go
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -904,10 +900,10 @@ Com_GOSUB:
 #-------------------------------------------------------------------------
 Com_Return:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     PopLine                 # 現在行の後ろは無視
         mv      s1, zero                # not EOL
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -916,9 +912,9 @@ Com_Return:
 #-------------------------------------------------------------------------
 Com_IF:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         beqz    a0, Com_Comment
         ret                             # 真なら戻る、偽なら次行
@@ -941,8 +937,7 @@ Com_Error:
 #-------------------------------------------------------------------------
 Com_DO:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         ld      a0, -3(gp)
         bne     a0, zero, 1f            # ExecMode=Direct ?
         la      a0, no_direct_mode      # エラー表示
@@ -991,10 +986,7 @@ Com_DO:
         lbu     a1, -1(gp)              # LSTACK=LSTACK-3
         addi    a1, a1, -3
         sb      a1, -1(gp)              # LSTACK
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       8f                      # return
 
     6: # continue UNTIL
         lbu     a1, -1(gp)              # LSTACK 戻りアドレス
@@ -1010,17 +1002,13 @@ Com_DO:
         addi    a2, a2, 1024
         ld      t1, (a2)                # gp+(a1-2)*8+1024
         mv      s1, zero                # not EOL
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       8f                      # return
 
-    7: # do
-        li      a0, 1                   # DO
+    7:  li      a0, 1                   # DO
         jal     PushValue
         jal     PushLine
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+
+    8:  ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1030,7 +1018,7 @@ Com_DO:
 #-------------------------------------------------------------------------
 SetVar:         # 変数代入
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipAlpha               # 変数の冗長部分の読み飛ばし
         slli    t0, a1, 3
         add     s0, gp, t0              # 変数のアドレス
@@ -1111,7 +1099,7 @@ SetVar:         # 変数代入
         ld      s0, (s0)                # 変数にはコピー先
         jal     RangeCheck              # コピー先を範囲チェック
         bnez    a2, s_range_err         # 範囲外をアクセス
-        lbu     tp , (t2)               # PeekChar
+        lbu     tp, (t2)                # PeekChar
         li      t0, '"                  # "
         bne     tp, t0, s_sp0
 
@@ -1123,14 +1111,14 @@ SetVar:         # 変数代入
         beq     tp, t0, 2f
         beqz    tp, 2f
         add     t0, s0, a2
-        sb      tp , (t0)
+        sb      tp, (t0)
         addi    a2, a2, 1
         li      t0, FNAMEMAX
         bltu    a2, t0, 1b
     2:                                  # done
         mv      tp, zero
         add     t0, s0, a2
-        sb      tp , (t0)
+        sb      tp, (t0)
         addi    t0, gp, '%' * 8
         sd      a2, (t0)                # コピーされた文字数
         j       s_var_exit
@@ -1165,7 +1153,7 @@ SetVar:         # 変数代入
     # a1 にインデックスの値、a0 に右辺値を格納、a2は範囲チェック
     s_array:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     Exp                     # 配列インデックス
         mv      a1, a0
         ld      s0, (s0)
@@ -1177,7 +1165,7 @@ SetVar:         # 変数代入
     s_range_err:
         jal     RangeError              # アクセス可能範囲を超えた
     s_var_exit:
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1189,7 +1177,7 @@ SetVar:         # 変数代入
 RangeCheck:
         addi    sp, sp, -16
         sd      a1,  8(sp)
-        sd      a0,  0(sp)
+        sd      a0, (sp)
         addi    t0, gp, '[' * 8         # 範囲チェックフラグ
         ld      a0, (t0)
         beqz    a0, 2f                  # 0 ならチェックしない
@@ -1206,7 +1194,7 @@ RangeCheck:
 
     2:  mv      a2, zero                # a0 = 0
     3:  ld      a1,  8(sp)
-        ld      a0,  0(sp)
+        ld      a0, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1218,13 +1206,13 @@ RangeCheck:
 SkipAlpha:
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a1, tp                  # 変数名を a1 に退避
     1:  jal     GetChar
         jal     IsAlpha
         beqz    a0, 1b
     2:  ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1237,10 +1225,10 @@ SkipAlpha:
 SkipEqualExp:
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar                 # check =
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
 SkipEqualExp2:
         li      t0, '='                 # 先読みの時
@@ -1252,16 +1240,16 @@ SkipEqualExp2:
 SkipCharExp:
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar                 # skip a character
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
 Exp:
         addi    sp, sp, -16
         sd      a1,  8(sp)
-        sd      ra,  0(sp)
-        lbu     tp , (t2)               # PeekChar
+        sd      ra, (sp)
+        lbu     tp, (t2)                # PeekChar
         li      t0, ' '
         bne     tp, t0, e_ok
         li      a1, 1
@@ -1273,7 +1261,7 @@ Exp:
         sd      a3, 24(sp)
         sd      a2, 16(sp)
         sd      a1,  8(sp)
-        sd      a4,  0(sp)
+        sd      a4, (sp)
         jal     Factor                  # a1 に項の値
         mv      a0, a1                  # 式が項のみの場合に備える
     e_next:
@@ -1366,7 +1354,7 @@ Exp:
     e_exp7:
         li      t0, '<'                 # <
         bne     tp, t0, e_exp8
-        lbu     tp , (t2)               # PeekChar
+        lbu     tp, (t2)                # PeekChar
         li      t0, '='                 # <=
         beq     tp, t0, e_exp71
         li      t0, '>'                 # <>
@@ -1401,7 +1389,7 @@ Exp:
     e_exp8:
         li      t0, '>'                 # >
         bne     tp, t0, e_exp9
-        lbu     tp , (t2)               # PeekChar
+        lbu     tp, (t2)                # PeekChar
         li      t0, '='                 # >=
         beq     tp, t0, e_exp81
         li      t0,  '>'                # >>
@@ -1428,10 +1416,10 @@ Exp:
         ld      a3, 24(sp)
         ld      a2, 16(sp)
         ld      a1,  8(sp)
-        ld      a4,  0(sp)
+        ld      a4, (sp)
         addi    sp, sp, 32
         ld      a1,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1443,7 +1431,7 @@ GetTime:
         sd      a3, 24(sp)
         sd      a2, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         la      a3, TV
         mv      a0, a3
         addi    a1, a3, 16              # TZ
@@ -1457,7 +1445,7 @@ GetTime:
         ld      a3, 24(sp)
         ld      a2, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -1465,11 +1453,8 @@ GetTime:
 # マイクロ秒単位のスリープ _=n
 #-------------------------------------------------------------------------
 Com_USleep:
-        addi    sp, sp, -32
-        sd      a5, 24(sp)
-        sd      a4, 16(sp)
-        sd      a3,  8(sp)
-        sd      ra,  0(sp)
+        addi    sp, sp, -16
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         la      a4, TV                  # 第5引数
         li      a2, 1000                # a2 = 1000
@@ -1488,11 +1473,8 @@ Com_USleep:
         li      a7, sys_pselect6
         ecall
         jal     CheckError
-        ld      a5, 24(sp)
-        ld      a4, 16(sp)
-        ld      a3,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 32
+        ld      ra, (sp)
+        addi    sp, sp, 16
         ret
 
 #-------------------------------------------------------------------------
@@ -1503,7 +1485,7 @@ Com_USleep:
 Variable:
         addi    sp, sp, -16
         sd      s0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipAlpha               # 変数名は a1
         slli    t0, a1, 3
         add     s0, gp, t0              # 変数のアドレス
@@ -1517,7 +1499,7 @@ Variable:
         beq     tp, t0, v_array8        # 8バイト配列
         ld      a1, (s0)                # 単純変数
         ld      s0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1566,7 +1548,7 @@ Variable:
         jal     RangeError
     v_return:
         ld      s0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1579,7 +1561,7 @@ Factor:
         sd      a3, 24(sp)
         sd      a2, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         jal     IsNum
         bltz    a0, f_bracket
@@ -1747,7 +1729,7 @@ Factor:
         ld      a3, 24(sp)
         ld      a2, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -1759,7 +1741,7 @@ NumInput:
         sd      a3, 24(sp)
         sd      a2, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a2, s1                  # EOL状態退避
         li      a0, MAXLINE             # 1 行入力
         mv      a3, t2
@@ -1776,7 +1758,7 @@ NumInput:
         ld      a3, 24(sp)
         ld      a2, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -1787,7 +1769,7 @@ StringInput:
         addi    sp, sp, -32
         sd      a2, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a2, s1                  # EOL状態退避
         li      a0, MAXLINE             # 1 行入力
         la      a1, input2              # 行ワークエリア
@@ -1798,7 +1780,7 @@ StringInput:
         jal     GetChar
         ld      a2, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -1810,7 +1792,7 @@ CharConst:
         addi    sp, sp, -32
         sd      a2, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a1, zero
         li      a0, 4                   # 文字定数は4バイトまで
     1:
@@ -1825,7 +1807,7 @@ CharConst:
         jal     GetChar
         ld      a2, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -1834,14 +1816,14 @@ CharConst:
 # a1 に数値が返る
 #-------------------------------------------------------------------------
 Hex:
-        lbu     tp , (t2)               # check $$
+        lbu     tp,(t2)                 # check $$
         li      t0, '$'
         beq     tp, t0, StringInput
         addi    sp, sp, -32
         sd      s2, 24(sp)
         sd      a2, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a1, zero
         mv      a2, a1
     1:
@@ -1858,7 +1840,7 @@ Hex:
         ld      s2, 24(sp)
         ld      a2, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -1877,13 +1859,13 @@ IsNum2: li      t0, '0'                 # 0 - 9
 
 IsHex:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     IsHex1                  # A - F ?
         bgez    a0, 1f                  # yes goto 1f
         jal     IsHex2                  # a - f ?
         bltz    a0, 2f
     1:  addi    a0, a0, 10
-    2:  ld      ra,  0(sp)
+    2:  ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1909,11 +1891,11 @@ IsHex2:
 
 IsHexNum:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     IsNum2                  # 数字か?
         bgez    a0, 1f                  # yes
         jal     IsHex                   # Hexか?
-    1:  ld      ra,  0(sp)
+    1:  ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -1926,7 +1908,7 @@ CharInput:
         ld      s2, 24(sp)
         ld      a2, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -1946,14 +1928,14 @@ LineEdit:
         jal     LineSearch              # 入力済み行番号を探索
         beqz    a1, 4f                  # 見つからないので終了
         la      t2, input2              # 入力バッファ
-        lw      a0, 4(t1)
+        lwu     a0, 4(t1)
         jal     PutDecimal              # 行番号書き込み
         li      a0, ' '
         sb      a0, (t2)
         addi    t2, t2, 1               # 行内容の書込み先
         addi    t1, t1, 8               # 行番号の後ろの本文へ
     2:
-        lbu      a0, (t1)                # ソース行を読み込み
+        lbu     a0, (t1)                # ソース行を読み込み
         sb      a0, (t2)                # 入力バッファにコピー
         addi    t2, t2, 1               # 1文字進める
         addi    t1, t1, 1
@@ -1968,7 +1950,7 @@ LineEdit:
     4:
         mv      s1, zero                # EOL=no, 入力済み
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret                             # Mainloopにreturn
 
@@ -1977,16 +1959,16 @@ LineEdit:
 #   a0 に表示開始行番号
 #-------------------------------------------------------------------------
 ListMore:
-        jal     LineSearch             # 表示開始行を検索
-        jal     GetChar                # skip '+'
-        jal     Decimal                # 表示行数を取得
+        jal     LineSearch              # 表示開始行を検索
+        jal     GetChar                 # skip '+'
+        jal     Decimal                 # 表示行数を取得
         bgtz    a0, 1f
-        li      a0, 20                 # 表示行数無指定は20行
+        li      a0, 20                  # 表示行数無指定は20行
     1:  mv      a2, t1
-    2:  lw      a1, (a2)               # 次行までのオフセット
-        bltz    a1, List_all           # コード最終か?
-        lw      a3, 4(a2)              # 行番号
-        add     a2, a2, a1             # 次行先頭
+    2:  lw      a1, (a2)                # 次行までのオフセット
+        bltz    a1, List_all            # コード最終か?
+        lw      a3, 4(a2)               # 行番号
+        add     a2, a2, a1              # 次行先頭
         addi    a0, a0, -1
         bnez    a0, 2b
         j       List_loop
@@ -2033,7 +2015,7 @@ List_loop:
     6:
         li      s1, 1                   # 次に行入力 EOL=yes
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret                             # Mainloopにreturn
 
@@ -2043,13 +2025,9 @@ List_loop:
 # デバッグ用プログラム行リスト <xxxx> 1#
 #-------------------------------------------------------------------------
 DebugList:
-        addi    sp, sp, -48
-        sd      t1, 40(sp)
-        sd      a3, 32(sp)
-        sd      a2, 24(sp)
-        sd      a1, 16(sp)
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        addi    sp, sp, -16
+        sd      t1, 8(sp)
+        sd      ra, (sp)
         addi    t0, gp, '=' * 8         # プログラム先頭
         lw      t1, (t0)
         mv      a0, t1
@@ -2098,19 +2076,14 @@ DebugList:
         j       1b                      # 次行処理
 
     4:  jal     NewLine
-        ld      t1, 40(sp)
-        ld      a3, 32(sp)
-        ld      a2, 24(sp)
-        ld      a1, 16(sp)
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 48
+        ld      t1,  8(sp)
+        ld      ra, (sp)
+        addi    sp, sp, 16
         ret
 
 call_DebugList:
         jal     DebugList
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret                             # Mainloopにreturn
 
@@ -2118,11 +2091,8 @@ call_DebugList:
 # デバッグ用変数リスト <xxxx> 1$
 #-------------------------------------------------------------------------
 VarList:
-        addi    sp, sp, -32
-        sd      a2, 24(sp)
-        sd      a1, 16(sp)
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        addi    sp, sp, -16
+        sd      ra, (sp)
 
         li      a2, 0x21
     1:  mv      a0, a2
@@ -2139,19 +2109,15 @@ VarList:
         addi    a2, a2, 1
         li      t0, 0x7F
         bltu    a2, t0, 1b
-        ld      a2, 24(sp)
-        ld      a1, 16(sp)
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 32
+        ld      ra, (sp)
+        addi    sp, sp, 16
         ret
 
 call_VarList:
         jal     VarList
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
-        ret                            # Mainloopにreturn
+        ret                             # Mainloopにreturn
 
 #-------------------------------------------------------------------------
 # デバッグ用ダンプリスト <xxxx> 1%
@@ -2159,7 +2125,7 @@ call_VarList:
 DumpList:
         addi    sp, sp, -16
         sd      tp,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         add     t0, gp, '=' * 8         # プログラム先頭
         ld      a2, (t0)
         andi    a2, a2, 0xfffffffffffffff0  # 16byte境界から始める
@@ -2184,13 +2150,13 @@ DumpList:
         bnez    tp, 1b                  # 次行処理
    3:
         ld      tp,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
 call_DumpList:
         jal     DumpList
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2199,7 +2165,7 @@ call_DumpList:
 #-------------------------------------------------------------------------
 LabelList:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         la      a4, LabelTable          # ラベルテーブル先頭
         la      a2, TablePointer
         ld      a3, (a2)                # テーブル最終登録位置
@@ -2215,14 +2181,13 @@ LabelList:
         addi    a4, a4, 32
         j       1b
      2:
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
 call_LabelList:
         jal     LabelList
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret                             # Mainloopにreturn
 .endif
@@ -2240,14 +2205,12 @@ call_LabelList:
 #-------------------------------------------------------------------------
 EditMode:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     Decimal                 # 行番号取得
         beqz    a0, List                # 行番号 0 ならリスト
         bne     tp, zero, 1f            # 行番号のみでない
         jal     LineDelete              # 行削除(a0)
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret                             # 戻って Mainloop
 
@@ -2317,8 +2280,7 @@ LineInsert:
         addi    t1, t1, 1
         bnez    a2, 3b                  # 行末?
         li      s1, 1                   # 次に行入力 EOL=yes
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret                             # Mainloopにreturn
 
@@ -2329,8 +2291,7 @@ LineInsert:
 #-------------------------------------------------------------------------
 LineDelete:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     LineSearch              # 入力済み行番号を探索
         beqz    a1, 2f                  # 一致する行がなければ終了
 
@@ -2351,8 +2312,7 @@ LineDelete:
         bnez    a4, 1b
     2:
         li      s1, 1                   # 次に行入力 EOL=yes
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2387,7 +2347,7 @@ Decimal:
         addi    sp, sp, -32
         sd      a3, 24(sp)              # 数値
         sd      a2, 16(sp)              # １なら負
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a2, zero                # 正の整数を仮定
         mv      a3, zero
         li      a1, 10
@@ -2414,7 +2374,7 @@ Decimal:
     5:  mv      a0, a3
         ld      a3, 24(sp)
         ld      a2, 16(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -2428,8 +2388,7 @@ PutDecimal:
         sd      a3, 32(sp)
         sd      a2, 24(sp)
         sd      a1, 16(sp)
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a4, sp
         addi    sp, sp, -32             # allocate buffer
         mv      a2, zero                # counter
@@ -2453,8 +2412,7 @@ PutDecimal:
         ld      a3, 32(sp)
         ld      a2, 24(sp)
         ld      a1, 16(sp)
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 48
         ret
 
@@ -2473,20 +2431,20 @@ IsNum:  li      t0, '0'                 # 0 - 9
 
 GetDigit:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar                 # 0 - 9
         jal     IsNum
-    1:  ld      ra,  0(sp)
+    1:  ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
 IsAlpha:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     IsAlpha1                # A - Z ?
         beqz    a0, 1f                  # yes return a0=0
         jal     IsAlpha2                # a - z ?
-    1:  ld      ra,  0(sp)              # yes return a0=0
+    1:  ld      ra, (sp)              # yes return a0=0
         addi    sp, sp, 16
         ret
 
@@ -2512,11 +2470,11 @@ IsAlpha2:
 
 IsAlphaNum:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     IsAlpha                 # 英文字なら a0=0
         beqz    a0, 1f
         jal     IsNum                   # 数字か? a0=数値
-    1:  ld      ra,  0(sp)
+    1:  ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2525,8 +2483,7 @@ IsAlphaNum:
 #-------------------------------------------------------------------------
 READ_FILE:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a3, zero                #
         la      a1, input2              # 入力バッファアドレス
     1:
@@ -2551,8 +2508,7 @@ READ_FILE:
     3:  mv      s1, a3                  # EOL=no
     4:  sb      a3, (a1)
         la      t2, input2
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2561,8 +2517,7 @@ READ_FILE:
 #-------------------------------------------------------------------------
 Com_OutNum:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar                 # get next
         li      t0, '='
         bne     tp, t0, 1f
@@ -2626,8 +2581,7 @@ Com_OutNum:
     on_dec_right0:
         jal     PrintRight0
     to_ret:
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2636,8 +2590,7 @@ Com_OutNum:
 #-------------------------------------------------------------------------
 Com_OutChar:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar                 # get next
         li      t0, '='
         beq     tp, t0, 1f
@@ -2649,10 +2602,7 @@ Com_OutChar:
         beq     tp, t0, 5f
         li      t0, '*'                 # $*=StrPtr
         beq     tp, t0, 7f
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       8f                      # return
 
     1:  jal     Exp                     # 1バイト文字
         j       3f
@@ -2666,10 +2616,7 @@ Com_OutChar:
         jal     OutChar
         mv      a0, a1
     3:  jal     OutChar
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       8f                      # return
 
     4:  jal     SkipEqualExp            # 4バイト文字
         mv      a1, a0
@@ -2684,15 +2631,11 @@ Com_OutChar:
         jal     OutChar
         addi    a2, a2, -1
         bne     a2, zero, 6b
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
-        addi    sp, sp, 16
-        ret
+        j       8f                      # return
 
     7:  jal     SkipEqualExp
         jal     OutAsciiZ
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+    8:  ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2701,16 +2644,14 @@ Com_OutChar:
 #-------------------------------------------------------------------------
 Com_Space:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # 1文字を読み飛ばした後 式の評価
         mv      a1, a0
         li      a0, ' '
     1:  jal     OutChar
         addi    a1, a1, -1
         bnez    a1, 1b
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2719,9 +2660,9 @@ Com_Space:
 #-------------------------------------------------------------------------
 Com_NewLine:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     NewLine
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2730,8 +2671,7 @@ Com_NewLine:
 #-------------------------------------------------------------------------
 Com_String:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a1, zero
         mv      a0, t2
     1:  jal     GetChar
@@ -2743,8 +2683,7 @@ Com_String:
         j       1b
     2:
         jal     OutString
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2753,8 +2692,7 @@ Com_String:
 #-------------------------------------------------------------------------
 Com_GO:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, '!'
         beq     tp, t0, 2f              # #! はコメント、次行移動
@@ -2780,8 +2718,7 @@ Com_GO_go:
         bnez    a0, 3f                  # 行番号にジャンプ
     2: # nextline
         li      s1, 1                   # 次行に移動  EOL=yes
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2806,15 +2743,13 @@ Com_GO_go:
         jal     SetLineNo2              # 行番号を # に設定
         addi    t2, t1, 8               # 次行先頭
         mv      s1, zero                # EOL=no
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
-       ret
+        ret
     7: # stop:
         jal     CheckCGI               # CGIモードなら終了
         jal     WarmInit1              # 入力デバイス変更なし
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2840,7 +2775,7 @@ LabelScan:
         sd      a2, 24(sp)
         sd      a1, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         addi    t0, gp, '=' * 8
         ld      t1, (t0)                # コード先頭アドレス
         lw      tp, (t1)                # コード末なら終了
@@ -2855,7 +2790,7 @@ LabelScan:
     2:  li      a1, 8                   # テキスト先頭位置
     3:                                  # 空白をスキップ
         add     t0, t1, a1
-        lbu     tp , (t0)               # 1文字取得
+        lbu     tp, (t0)                # 1文字取得
         beqz    tp, 7f                  # 行末なら次行
         li      t0, ' '                 # 空白読み飛ばし
         bne     tp, t0, 4f              # ラベル登録へ
@@ -2870,14 +2805,14 @@ LabelScan:
         mv      a2, zero                # ラベル長
     5:
         add     t0, t1, a1
-        lbu     tp ,(t0)                # 1文字取得
+        lbu     tp, (t0)                # 1文字取得
         beqz    tp, 6f                  # 行末
-        li      t0 , ' '                # ラベルの区切りは空白
+        li      t0, ' '                 # ラベルの区切りは空白
         beq     tp, t0, 6f              # ラベル文字列
         li      t0, 23                  # 最大11文字まで
         beq     a2, t0, 6f              # 文字数
         add     t0, a3, a2
-        sb      tp ,(t0)                # 1文字登録
+        sb      tp, (t0)                # 1文字登録
         addi    a1, a1, 1
         addi    a2, a2, 1
         j       5b                      # 次の文字
@@ -2885,8 +2820,8 @@ LabelScan:
     6: # registerd
         mv      tp, zero
         add     t0, a3, a2
-        sb      tp ,(t0)                # ラベル文字列末
-        lw      tp ,(t1)                # 次行オフセット
+        sb      tp, (t0)                # ラベル文字列末
+        lw      tp, (t1)                # 次行オフセット
         add     tp, t1, tp              # tpに次行先頭
         sd      tp, 24(a3)              # アドレス登録
         addi    a3, a3, 32
@@ -2908,7 +2843,7 @@ LabelScan:
         ld      a2, 24(sp)
         ld      a1, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 48
         ret
 
@@ -2923,7 +2858,7 @@ LabelScan:
 LabelSearch:
         addi    sp, sp, -16
         sd      a4,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         la      a3, LabelTable          # ラベルテーブル先頭
         la      a6, TablePointer
         ld      a5, (a6)                # テーブル最終登録位置
@@ -2952,7 +2887,7 @@ LabelSearch:
         jal     GetChar
         mv      a0, zero                # 見つかった a0 = 0
         ld      a4,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2967,23 +2902,21 @@ LabelSearch:
         jal     Skip_excess             # ラベルを空白か行末まで読飛ばし
         li      a0, -1
         ld      a4,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
 Skip_excess:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
     1:  add     t0, t2, a2
-        lbu     tp ,(t0)                # 長過ぎるラベルはスキップ
+        lbu     tp, (t0)                # 長過ぎるラベルはスキップ
         jal     IsAlphaNum
         bltz    a0, 2f                  # 英数字以外
         addi    a2, a2, 1               # ソース行内の読み込み位置更新
         j       1b
     2:
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -2994,8 +2927,7 @@ Skip_excess:
 #-------------------------------------------------------------------------
 Com_Top:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         mv      a3, a0
         jal     RangeCheck              # ',' <= '=' < '*'
@@ -3021,15 +2953,13 @@ Com_Top:
         la      a0, EndMark_msg         # プログラム未入力
         jal     OutAsciiZ
         jal     WarmInit
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
     4: # range_err
         jal     RangeError
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3039,8 +2969,7 @@ Com_Top:
 #-------------------------------------------------------------------------
 Com_NEW:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         add     t0, gp, '=' * 8         # コード先頭
         ld      a2, (t0)                # &==*8
@@ -3051,8 +2980,7 @@ Com_NEW_set_end:
         add     t0, gp, '&' * 8         # 空きメモリ先頭
         sd      a2, (t0)                #
         jal     WarmInit1               # 入力デバイス変更なし
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
        ret
 
@@ -3062,13 +2990,13 @@ Com_NEW_set_end:
 #-------------------------------------------------------------------------
 Com_BRK:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         li      a7, sys_brk             # メモリ確保
         ecall
         add     t0, gp, '*' * 8         #    メモリ最終位置
         sd      a0, (t0)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3077,12 +3005,12 @@ Com_BRK:
 #-------------------------------------------------------------------------
 Com_RANDOM:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         addi    t0, gp, '`' * 8         # 乱数シード設定
         sd      a0, (t0)
         jal     sgenrand
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3091,11 +3019,11 @@ Com_RANDOM:
 #-------------------------------------------------------------------------
 Com_RCheck:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         add     t0, gp, '[' * 8         # 範囲チェック
         sd      a0, (t0)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3104,8 +3032,7 @@ Com_RCheck:
 #-------------------------------------------------------------------------
 Com_VarPush:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         ld      a2, -32(gp)             # VSTACK
         li      a3, VSTACKMAX
         addi    a3, a3, -1              # a3 = VSTACKMAX - 1
@@ -3136,8 +3063,7 @@ Com_VarPush:
         j       1b                      # 次の変数
     3: # exit
         sd      a2, -32(gp)             # VSTACK更新
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3146,8 +3072,7 @@ Com_VarPush:
 #-------------------------------------------------------------------------
 Com_VarPop:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         ld      a2, -32(gp)             # VSTACK
         la      a1, VarStack
     1: # next:
@@ -3167,8 +3092,7 @@ Com_VarPop:
         j       1b
     2: # exit:
         sd      a2, -32(gp)             # VSTACK更新
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3177,14 +3101,14 @@ Com_VarPop:
 #-------------------------------------------------------------------------
 Com_FileTop:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         mv      s0, a0
         jal     RangeCheck              # 範囲チェック
         bnez    a2, 1f                  # Com_FileEnd:1 範囲外をアクセス
         addi    t0, gp, '{' * 8         # ファイル格納域先頭
         sd      a0, (t0)                # ラベル無効化
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3193,19 +3117,19 @@ Com_FileTop:
 #-------------------------------------------------------------------------
 Com_FileEnd:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     SkipEqualExp            # = を読み飛ばした後 式の評価
         mv      s0, a0
         jal     RangeCheck              # 範囲チェック
         bnez    a2, 1f                  # 範囲外をアクセス
         addi    t0, gp, '}' * 8         # ファイル格納域先頭
         sd      a0, (t0)                # ラベル無効化
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
     1: # range_err
         jal     RangeError
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3215,14 +3139,14 @@ Com_FileEnd:
 Com_CdWrite:
         addi    sp, sp, -16
         sd      t2,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetFileName
         jal     fwopen                  # open
         bgez    a0, 4f                  # exit
         bltz    a0, 5f                  # error
         sd      a0, -24(gp)             # FileDescW
         add     t0, gp, '=' * 8
-        ld      a3, (t0)   # コード先頭アドレス
+        ld      a3, (t0)                # コード先頭アドレス
 
     1: # loop
         la      t2, input2              # ワークエリア(行)
@@ -3265,7 +3189,7 @@ Com_CdWrite:
         jal     fclose                  # ファイルクローズ
         li      s1, 1                   # EOL=yes
         ld      t2,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3277,7 +3201,7 @@ Com_CdWrite:
 #-------------------------------------------------------------------------
 Com_CdRead:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         lbu     a0, -4(gp)
         bnez    a0, 2f
         jal     GetFileName
@@ -3289,7 +3213,7 @@ Com_CdRead:
         sb      a1, -4(gp)              # Read from file
         mv      s1, a1                  # EOL
     1: # exit
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
     2: # error
@@ -3316,7 +3240,7 @@ CheckError:
         addi    sp, sp, -32
         sd      a1, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         addi    t0, gp, '|' * 8         # 返り値を | に設定
         sd      a0, (t0)
 .ifdef  DETAILED_MSG
@@ -3329,7 +3253,7 @@ CheckError:
     1:
         ld      a1, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -3338,8 +3262,8 @@ CheckError:
 #-------------------------------------------------------------------------
 Com_FileWrite:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
-        lbu     tp , (t2)               # check (*=\0
+        sd      ra, (sp)
+        lbu     tp, (t2)                # check (*=\0
         li      t0, '*
         bne     tp, t0, 1f
         jal     GetChar
@@ -3367,7 +3291,7 @@ Com_FileWrite:
         ecall
         jal     fclose
     3: # exit:
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3376,8 +3300,8 @@ Com_FileWrite:
 #-------------------------------------------------------------------------
 Com_FileRead:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
-        lbu     tp , (t2)               # check )*=\0
+        sd      ra, (sp)
+        lbu     tp, (t2)                # check )*=\0
         li      t0, '*
         bne     tp, t0, 1f
         jal     GetChar
@@ -3423,7 +3347,7 @@ Com_FileRead:
         jal     fclose
         bltz    a2, SYS_Error           # Read Error
     3: # exit
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3440,13 +3364,13 @@ Com_Exit:       #   7E  ~  VTL終了
 #-------------------------------------------------------------------------
 Com_Ext:
         addi    sp, sp, -16
-        sd      ra,  0(sp)
+        sd      ra, (sp)
 .ifndef SMALL_VTL
 .include        "ext.s"
 func_err:
         j       pop_and_Error
 .endif
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3457,7 +3381,7 @@ Com_Exec:
 .ifndef SMALL_VTL
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar                 # skip =
         li      t0, '*
         bne     tp, t0, 0f
@@ -3479,7 +3403,7 @@ Com_Exec:
         sd      s0, 24(sp)
         sd      t2, 16(sp)
         sd      t1,  8(sp)
-        sd      tp,  0(sp)
+        sd      tp, (sp)
         jal     ParseArg                # コマンド行の解析
 #        jal     CheckParseArg
         mv      t1, a1                  # リダイレクト先ファイル名
@@ -3554,10 +3478,10 @@ Com_Exec:
         ld      s0, 24(sp)
         ld      t2, 16(sp)
         ld      t1,  8(sp)
-        ld      tp,  0(sp)
+        ld      tp, (sp)
         addi    sp, sp, 32
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3613,26 +3537,26 @@ execve:
 close_new_pipe:
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         ld      a0, 4(t2)               # 出力パイプをクローズ
         jal     fclose
         ld      a0, (t2)                # 入力パイプをクローズ
         jal     fclose
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
 close_old_pipe:
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         ld      a0, 12(t2)              # 出力パイプをクローズ
         jal     fclose
         ld      a0, 8(t2)               # 入力パイプをクローズ
         jal     fclose
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
 .endif
         ret
@@ -3649,7 +3573,7 @@ CheckParseArg:
         sd      a2, 24(sp)
         sd      a1, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         beqz    a1, 0f
         mv      a0, a1
         jal     OutAsciiZ
@@ -3682,7 +3606,7 @@ CheckParseArg:
         ld      a2, 24(sp)
         ld      a1, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 48
         ret
 
@@ -3697,7 +3621,7 @@ ParseArg:
         sd      t1, 24(sp)
         sd      t2, 16(sp)
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a2, zero                # 配列インデックス
         mv      a3, zero                # パイプのカウンタ
         mv      a1, zero                # リダイレクトフラグ
@@ -3756,7 +3680,7 @@ pa_exit:
         ld      t1, 24(sp)
         ld      t2, 16(sp)
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 32
         ret
 
@@ -3773,8 +3697,7 @@ end_mark:
 Com_Function:
 .ifndef SMALL_VTL
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar                 # get the next character of "|"
 func_c:
         li      t0, 'c'
@@ -3835,8 +3758,7 @@ func_z:
         bne     tp, t0, pop_and_Error
         jal     def_func_z              # |z
 func_return:
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -3845,8 +3767,7 @@ func_return:
 #------------------------------------
 def_func_c:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 'a'
         beq     tp, t0, func_ca         # cat
@@ -3917,8 +3838,7 @@ func_cw:
 #------------------------------------
 def_func_e:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 'x'
         beq     tp, t0, func_ex         # execve
@@ -3949,8 +3869,7 @@ def_func_f:
 #------------------------------------
 def_func_l:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 's'
         beq     tp, t0, func_ls         # ls
@@ -3981,7 +3900,7 @@ func_ls:
         sd      s11, 24(sp)
         sd      t2, 16(sp)
         sd      t1,  8(sp)
-        sd      tp,  0(sp)
+        sd      tp, (sp)
         mv      t1, a0                  # fd 保存
         la      s11, DirName            # for GetFileStat (rv6)
     4:  # ディレクトリエントリ取得
@@ -4023,7 +3942,7 @@ func_ls:
         ld      s11, 24(sp)
         ld      t2, 16(sp)
         ld      t1,  8(sp)
-        ld      tp,  0(sp)
+        ld      tp, (sp)
         addi    sp, sp, 32
         j       func_return2
 
@@ -4032,8 +3951,7 @@ func_ls:
 #------------------------------------
 def_func_m:
          addi    sp, sp, -16
-         sd      a0,  8(sp)
-         sd      ra,  0(sp)
+         sd      ra, (sp)
          jal     GetChar
          li      t0, 'd'
          beq     tp, t0, func_md        # mkdir
@@ -4092,8 +4010,7 @@ func_mv:
 #------------------------------------
 def_func_p:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 'v'
         beq     tp, t0, func_pv         # pivot_root
@@ -4114,8 +4031,7 @@ func_pv:
 #------------------------------------
 def_func_r:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 'd'
         beq     tp, t0, func_rd         # rmdir
@@ -4160,8 +4076,7 @@ func_rt:                                # reset terminal
 #------------------------------------
 def_func_s:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 'f'
         beq     tp, t0, func_sf         # swapoff
@@ -4202,8 +4117,7 @@ func_sy:
 #------------------------------------
 def_func_u:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 'm'
         beq     tp, t0, func_um         # umount
@@ -4235,8 +4149,7 @@ func_ud:
 #------------------------------------
 def_func_v:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 'e'
         beq     tp, t0, func_ve         # version
@@ -4265,8 +4178,7 @@ version:
 #------------------------------------
 def_func_z:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetChar
         li      t0, 'c'
         beq     tp, t0, func_zc         #
@@ -4286,8 +4198,7 @@ func_zz:
         jal     SystemCall
         jal     CheckError
 func_return2:
-        ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -4306,7 +4217,7 @@ URL_Decode:
         sd      s2, 24(sp)
         sd      s1, 16(sp)
         sd      s0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         mv      a3, a0                  # top of input buffer
         add     s4, a3, a1
         addi    s4, s4, -1              # end of input encoded string
@@ -4353,7 +4264,7 @@ URL_Decode:
         ld      s2, 24(sp)
         ld      s1, 16(sp)
         ld      s0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 48
         ret
 
@@ -4363,7 +4274,7 @@ URL_Decode:
 FuncBegin:
         addi    sp, sp, -16
         sd      a0,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     OutAsciiZ
         jal     GetChar                 # get *
         li      t0, '*'
@@ -4384,7 +4295,7 @@ FuncBegin:
     3:  jal     ParseArg                # 引数のパース
         la      a1, exarg
         ld      a0,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
     4:  li      tp, 0xFF                # エラー文字を FF
@@ -4397,7 +4308,7 @@ FuncBegin:
 Oct2Bin:
         addi    sp, sp, -16
         sd      a2,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     GetOctal               # a1
         bltz    a1, 2f                 # exit
         mv      a2, a1
@@ -4410,7 +4321,7 @@ Oct2Bin:
     2:
         mv      a1, a2
         ld      a2,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
@@ -4435,7 +4346,7 @@ GetOctal:
 DispFile:
         addi    sp, sp, -16
         sd      a6,  8(sp)
-        sd      ra,  0(sp)
+        sd      ra, (sp)
         jal     fropen                 # open
         jal     CheckError
         bltz    a0, 3f
@@ -4460,7 +4371,7 @@ DispFile:
         addi    sp, sp, 16
     3:
         ld      a6,  8(sp)
-        ld      ra,  0(sp)
+        ld      ra, (sp)
         addi    sp, sp, 16
 .endif                                 # .ifndef SMALL_VTL
         ret
@@ -4612,4 +4523,3 @@ VarStack:       .skip   VSTACKMAX*8     # gp+2048
 LabelTable:     .skip   LABELMAX*32     # 1024*32 bytes
 TablePointer:   .quad   0
 .endif
-
