@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : vtllib.s
-#  2024/11/12
+#  2024/11/15
 #  Copyright (C) 2003-2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  vtllib.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -1420,7 +1420,7 @@ RealKey:
         la      a1, new_termios
         jal     tcsetattr
         mv      a0, zero                # a0  stdin
-        mv      a1, sp                  # a1(stack) address
+        addi    a1, sp, 8               # a1(stack) address
         li      a2, 1                   # a2  length
         li      a7, sys_read
         ecall
