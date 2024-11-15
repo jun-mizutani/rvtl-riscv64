@@ -1713,15 +1713,15 @@ Factor:
         j       f_exit
 
     f_label:
-.ifdef VTL_LABEL
         li      t0, '^'
         bne     tp, t0, f_var
+.ifdef VTL_LABEL
         jal     LabelSearch             # ラベルのアドレスを取得
         beqz    a0, 2f                  # a0 が0ならa1にラベルアドレス
+.endif
         li      a2, 3
         sb      a2, -7(gp)              # ラベルエラー ExpError
     2:  j       f_exit
-.endif
 
     f_var:
         jal     Variable                # 変数，配列参照
