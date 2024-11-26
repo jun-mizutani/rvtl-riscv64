@@ -264,11 +264,25 @@ LongJump:
         la      a0, err_exp             # 式中に空白
         j       Error
 Exp_Error:
-        la      a0, err_vstack          # 変数スタックアンダーフロー
-        li      t0, 2
-        beq     a2, t0, 9f
+        li      t0, 1
+        bne     a2, t0, 10f
+        la      a0, err_space           # 式中の空白はエラー 
+        j       Error
+    10: li      t0, 2
+        bne     a2, t0, 11f
+        la      a0, err_vstack          # 変数スタックエラー
+        j       Error
+    11: li      t0, 3
+        bne     a2, t0, 12f 
         la      a0, err_label           # ラベル未定義メッセージ
-    9:  j       Error
+        j       Error
+    12: li      t0, 4
+        bne     a2, t0, 13f
+        la      a0, err_doublequote     # 式中に「"」
+        j       Error
+    13: 
+        la      a0, err_unknown         # 式のエラー
+        j       Error
 
 #-------------------------------------------------------------------------
 # キー入力またはファイル入力されたコードを実行
@@ -1714,7 +1728,7 @@ Factor:
 
     f_label:
         li      t0, '^'
-        bne     tp, t0, f_var
+        bne     tp, t0, f_dq
 .ifdef VTL_LABEL
         jal     LabelSearch             # ラベルのアドレスを取得
         beqz    a0, 2f                  # a0 が0ならa1にラベルアドレス
@@ -1723,6 +1737,14 @@ Factor:
         sb      a2, -7(gp)              # ラベルエラー ExpError
     2:  j       f_exit
 
+    f_dq:   
+        li      t0, 0x22                # '"'
+        bne     tp, t0, f_var
+        li      a2, 4
+        sb      a2, -7(gp)              # No string! ExpError
+        mv      a1, zero
+        j       f_exit
+        
     f_var:
         jal     Variable                # 変数，配列参照
     f_exit:
@@ -3386,8 +3408,10 @@ Com_Exec:
         li      t0, '*
         bne     tp, t0, 0f
         jal     SkipEqualExp
+        beqz    a0, pop_and_Error 
         jal     GetString2
         j       3f
+
     0:  jal     GetChar                 # skip double quote
         li      t0, '"'                 # "
         beq     tp, t0, 1f
@@ -4397,9 +4421,15 @@ cginame:        .asciz   "wltvr"
                 .align  2
 err_div0:       .asciz   "\nDivided by 0!\n"
                 .align  2
+err_doublequote:.asciz   "\nDoublequote in Exp!\n"
+                .align  2
+err_unknown:    .asciz   "\nUnknown Error!\n"
+                .align  2
 err_label:      .asciz   "\nLabel not found!\n"
                 .align  2
 err_vstack:     .asciz   "\nEmpty stack!\n"
+                .align  2
+err_space:      .asciz   "\nSpace in Expression at line "
                 .align  2
 err_exp:        .asciz   "\nError in Expression at line "
                 .align  2
