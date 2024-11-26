@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2024/11/15
+#  2024/11/26
 #  Copyright (C) 2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -3164,7 +3164,7 @@ Com_CdWrite:
         sd      ra, (sp)
         jal     GetFileName
         jal     fwopen                  # open
-        bgez    a0, 4f                  # exit
+        beqz    a0, 4f                  # exit
         bltz    a0, 5f                  # error
         sd      a0, -24(gp)             # FileDescW
         add     t0, gp, '=' * 8
@@ -3172,19 +3172,19 @@ Com_CdWrite:
 
     1: # loop
         la      t2, input2              # ワークエリア(行)
-        ld      a0, (a3)                # 次行へのオフセット
+        lw      a0, (a3)                # 次行へのオフセット
         addi    a0, a0, 1               # コード最終か?
-        beq     a0, zero, 4f            # 最終なら終了
-        ld      a0, 4(a3)               # 行番号取得
+        beqz    a0, 4f                  # 最終なら終了
+        lwu     a0, 4(a3)               # 行番号取得
         jal     PutDecimal              # a0の行番号をt2に書き込み
         li      a0, ' '                 # スペース書込み
         sb      a0, (t2)                # Write One Char
         addi    t2, t2, 1
         li      a1, 8
     2: # code:
-        add     t0, a3, a1
-        lbu     a0, (t0)                # コード部分書き込み
-        beq     a0, zero, 3f            # 行末か? file出力後次行
+        add     t0, a3, a1              # コード先頭アドレス
+        lbu     a0, (t0)                # コード部分読み込み
+        beqz    a0, 3f                  # 行末か? file出力後次行
         sb      a0, (t2)                # Write One Char
         addi    t2, t2, 1
         addi    a1, a1, 1
@@ -3192,6 +3192,8 @@ Com_CdWrite:
 
     3: # next:
         lw      a1, (a3)                # 次行オフセット
+        addi    a0, a1, 1               # コード最終か?
+        beqz    a0, 4f                  # 最終なら終了
         add     a3, a3, a1              # 次行先頭へ
         li      a0, 10
         sb      a0, (t2)                # 改行書込み
@@ -3202,7 +3204,7 @@ Com_CdWrite:
         jal     StrLen                  # a0の文字列長をa1に返す
         mv      a2, a1                  # 書きこみバイト数
         mv      a1, a0                  # バッファアドレス
-        ld      a0, 24(gp)              # FileDescW
+        ld      a0, -24(gp)             # FileDescW
         li      a7, sys_write           # system call
         ecall
         j       1b                      # 次行処理
@@ -4408,7 +4410,7 @@ mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
                 .align  2
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/15,(C)2024 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/26,(C)2024 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
                 .align  2
