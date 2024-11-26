@@ -1,5 +1,5 @@
 # Makefile for rvtl64 - RISC-V
-#     2024/11/09  Jun Mizutani
+#     2024/11/25  Jun Mizutani
 
 INSTALLDIR = /usr/bin/
 
@@ -27,6 +27,10 @@ rvtl : ${SOURCE}
 	${AS} -o rvtl64.o rvtl64.s
 	${LD} -o rvtl64 rvtl64.o
 	${STRIP} rvtl64
+
+nostrip : ${SOURCE}
+	${AS} -o rvtl64.o rvtl64.s
+	${LD} -o rvtl64 rvtl64.o
 
 debug : ${SOURCE}
 	${AS} -o rvtl64.o rvtl64.s --defsym DEBUG=1
