@@ -1,12 +1,14 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2024/11/26
+#  2024/12/13
 #  Copyright (C) 2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
 # as -o rvtl64.o rvtl64.s
 # ld -o rvtlw rvtl64.o
+
+.option rvc
 
 ARGMAX      =   15
 VSTACKMAX   =   1024
@@ -266,21 +268,21 @@ LongJump:
 Exp_Error:
         li      t0, 1
         bne     a2, t0, 10f
-        la      a0, err_space           # 式中の空白はエラー 
+        la      a0, err_space           # 式中の空白はエラー
         j       Error
     10: li      t0, 2
         bne     a2, t0, 11f
         la      a0, err_vstack          # 変数スタックエラー
         j       Error
     11: li      t0, 3
-        bne     a2, t0, 12f 
+        bne     a2, t0, 12f
         la      a0, err_label           # ラベル未定義メッセージ
         j       Error
     12: li      t0, 4
         bne     a2, t0, 13f
         la      a0, err_doublequote     # 式中に「"」
         j       Error
-    13: 
+    13:
         la      a0, err_unknown         # 式のエラー
         j       Error
 
@@ -1737,14 +1739,14 @@ Factor:
         sb      a2, -7(gp)              # ラベルエラー ExpError
     2:  j       f_exit
 
-    f_dq:   
+    f_dq:
         li      t0, 0x22                # '"'
         bne     tp, t0, f_var
         li      a2, 4
         sb      a2, -7(gp)              # No string! ExpError
         mv      a1, zero
         j       f_exit
-        
+
     f_var:
         jal     Variable                # 変数，配列参照
     f_exit:
@@ -3410,7 +3412,7 @@ Com_Exec:
         li      t0, '*
         bne     tp, t0, 0f
         jal     SkipEqualExp
-        beqz    a0, pop_and_Error 
+        beqz    a0, pop_and_Error
         jal     GetString2
         j       3f
 
@@ -4410,7 +4412,7 @@ mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
                 .align  2
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/11/26,(C)2024 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/12/13,(C)2024 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
                 .align  2
