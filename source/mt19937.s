@@ -73,9 +73,9 @@ sgenrand:
         and     s2, a0, s5              # S & 0xffff0000
         srli    s2, s2, 16              # (S & 0xffff0000 >> 16)
         or      a1, a1, s2              # A=A|(S & 0xffff0000 >> 16)
-        slli    t0, a2, 2
-        add     t0, s3, t0
-        sw      a1, (t0)                # mt[i]=A
+        slli    s0, a2, 2
+        add     s0, s3, s0
+        sw      a1, (s0)                # mt[i]=A
         mul     a0, s6, a0
         addi    a0, a0, 1               # S = R * S + 1
         addi    a2, a2, 1               # I=I+1
@@ -128,8 +128,8 @@ genrand:
         lwu     s6, 24(s9)              # UPPER_MASK
         lwu     s7, 28(s9)              # LOWER_MASK
         li      s1, 0                   # K=0
-    1:  slli    t0, s1, 2
-        add     s10, s3, t0
+    1:  slli    s0, s1, 2
+        add     s10, s3, s0
         lwu     a0, (s10)               # mt[K]
         and     a0, a0, s6              # mt[K] & UPPER_MASK
         add     a3, s1, 1               # J=K+1
@@ -141,8 +141,8 @@ genrand:
         sub     a0, s4, s5              # N-M=227
         blt     s1, a0, 1b
 
-    2:  slli    t0, s1, 2
-        add     s10, s3, t0
+    2:  slli    s0, s1, 2
+        add     s10, s3, s0
         lwu     a0, (s10)               # mt[K]
         and     a0, a0, s6              # UPPER_MASK
         addi    a3, s1, 1               # J=K+1
@@ -152,11 +152,11 @@ genrand:
         jal     rnd_common
         sw      a1, (s10)               # mt[K]=P^Q^Z
         addi    s1, s1, 1               # K=K+1
-        addi    t0, s4, -1              # 623
-        blt     s1, t0, 2b
+        addi    s0, s4, -1              # 623
+        blt     s1, s0, 2b
 
-        slli    t0, s1, 2
-        add     s10, s3, t0
+        slli    s0, s1, 2
+        add     s10, s3, s0
         lwu     a0, (s10)               # mt[K]
         and     a0, a0, s6              # UPPER_MASK
         li      a3, 0                   # J=0
@@ -164,24 +164,24 @@ genrand:
         addi    a2, s5, -1              # 396
         jal     rnd_common
         addi    a2, s4, -1              # 623
-        slli    t0, a2, 2
-        add     t0, s3, t0
-        sw      a1, (t0)                # mt[623]=P^Q^Z
+        slli    s0, a2, 2
+        add     s0, s3, s0
+        sw      a1, (s0)                # mt[623]=P^Q^Z
         li      s2, 0                   # mti=0
-    3:  slli    t0, s2, 2
-        add     t0, s3, t0
-        lwu     a3, (t0)                # y=mt[mti]
+    3:  slli    s0, s2, 2
+        add     s0, s3, s0
+        lwu     a3, (s0)                # y=mt[mti]
         addi    s2, s2, 1
         sw      s2, 36(s9)              # mti++
         srli    a0, a3, 11              # y>>11
         xor     a3, a3, a0              # y=y^(y>>11)
         slli    a0, a3, 7               # y << 7
-        lwu     t0, 16(s9)              # TEMPERING_MASK_B
-        and     a0, a0, t0              # TEMPERING_MASK_B
+        lwu     s0, 16(s9)              # TEMPERING_MASK_B
+        and     a0, a0, s0              # TEMPERING_MASK_B
         xor     a3, a3, a0
         slli    a0, a3, 15
-        lwu     t0, 20(s9)              # TEMPERING_MASK_C
-        and     a0, a0, t0              # TEMPERING_MASK_C
+        lwu     s0, 20(s9)              # TEMPERING_MASK_C
+        and     a0, a0, s0              # TEMPERING_MASK_C
         xor     a3, a3, a0
         srli    a0, a3, 18
         xor     a0, a3, a0
@@ -204,22 +204,22 @@ genrand:
         ret
 
     rnd_common:
-        slli    t0, a2, 2
-        add     t0, s3, t0
-        lwu     a3, (t0)                # mt[x]
+        slli    s0, a2, 2
+        add     s0, s3, s0
+        lwu     a3, (s0)                # mt[x]
         xor     a3, a3, a0              # mt[x]^P
         xor     a1, a3, a1
         ret
     rnd_common2:
-        slli    t0, a3, 2
-        add     t0, s3, t0
-        lwu     a1, (t0)                # mt[J]
+        slli    s0, a3, 2
+        add     s0, s3, s0
+        lwu     a1, (s0)                # mt[J]
         and     a1, a1, s7              # LOWER_MASK
         or      a3, a0, a1              # y
         srli    a0, a3, 1               # a0=(y>>1)
         li      a1, 0
-        andi    t0, a3, 1
-        beqz    t0, 1f
+        andi    s0, a3, 1
+        beqz    s0, 1f
         lwu     a1, 32(s9)              # MATRIX_A
     1:  ret
 

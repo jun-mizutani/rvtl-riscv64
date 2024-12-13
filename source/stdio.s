@@ -592,19 +592,19 @@ InputLine0:
         li      a3, 0                   # counter
     1:
         jal     InChar
-        li      t0, 0x08                # BS ?
-        bne     a0, t0, 2f
+        li      s0, 0x08                # BS ?
+        bne     a0, s0, 2f
         beq     a3, zero, 2f
         jal     BackSpace               # backspace
         addi    a3, a3, -1
         j       1b
     2:
-        li      t0, 0x0A                # enter ?
-        beq     a0, t0, 4f              # exit
+        li      s0, 0x0A                # enter ?
+        beq     a0, s0, 4f              # exit
 
         jal     OutChar                 # printable:
-        add     t0, a5, a3
-        sb      a0, 0(t0)
+        add     s0, a5, a3
+        sb      a0, 0(s0)
         addi    a3, a3, 1
         bge     a3, a4, 3f
         j       1b
@@ -614,8 +614,8 @@ InputLine0:
         j       1b
 
     4:  li      a0, 0
-        add     t0, a5, a3
-        sb      a0, 0(t0)
+        add     s0, a5, a3
+        sb      a0, 0(s0)
         addi    a3, a3, 1
         jal     NewLine
         mv      a0, a3

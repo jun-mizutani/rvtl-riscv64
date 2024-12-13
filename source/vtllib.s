@@ -203,26 +203,26 @@ RL_in_printable:
         bgeu    s9, s7, RL_in_toolong   #  s7:buffer size
         bltu    s10, s9, RL_insert      #  Insert Char
         jal     OutChar                 #  Yes. Display Char
-        add     t0, s6, s10
-        sb      a0, -1(t0)              # s10 was already incremented
+        add     s0, s6, s10
+        sb      a0, -1(s0)              # s10 was already incremented
         j       RL_next_char
 RL_insert:
-        li      t0, 0x80
-        bgeu    a0, t0, 0f
+        li      s0, 0x80
+        bgeu    a0, s0, 0f
         jal     OutChar
-    0:  addi    t0, s9, -1              # p = eol-1
-    1:  bgtu    s10, t0, 2f             # while(p=>cp){buf(p)=buf(p-1); p--}
+    0:  addi    s0, s9, -1              # p = eol-1
+    1:  bgtu    s10, s0, 2f             # while(p=>cp){buf(p)=buf(p-1); p--}
                                         #   if(s10>ip) goto2
-        add     a1, s6, t0              #   a1=s6 + s9 - 1
+        add     a1, s6, s0              #   a1=s6 + s9 - 1
         lbu     a2, -1(a1)
         sb      a2, (a1)
-        addi    t0, t0, -1              #  t0--
+        addi    s0, s0, -1              #  s0--
         j       1b
     2:
-        add     t0, s6, s10
-        sb      a0, -1(t0)              # s10 was already incremented
-        li      t0, 0x80
-        bgeu    a0, t0, 3f
+        add     s0, s6, s10
+        sb      a0, -1(s0)              # s10 was already incremented
+        li      s0, 0x80
+        bgeu    a0, s0, 3f
         jal     print_line_after_cp
         j       RL_next_char
     3:
@@ -252,20 +252,20 @@ RL_bs:
 
 RL_delete:
         beq     s10, s9, RL_next_char   # 行末でDELでは何もしない
-        add     t0, s6, s10
-        lbu     a0, (t0)                #  1文字目確認
+        add     s0, s6, s10
+        lbu     a0, (s0)                #  1文字目確認
         andi    a0, a0, 0xC0
-        li      t0, 0xC0
-        bne     a0, t0, 1f              #  UTF-8の2文字目以降
+        li      s0, 0xC0
+        bne     a0, s0, 1f              #  UTF-8の2文字目以降
         la      a0, DEL_AT_CURSOR       #  漢字なら2回1文字消去
         jal     OutPString
     1:  jal     RL_del1_char            #  1文字削除
         beq     s10, s9, 2f             #  行末なら終了
-        add     t0, s6, s10
-        lbu     a0, (t0)                #  2文字目文字取得
+        add     s0, s6, s10
+        lbu     a0, (s0)                #  2文字目文字取得
         andi    a0, a0, 0xC0
-        li      t0, 0x80
-        beq     a0, t0, 1b              #  UTF-8 後続文字 (ip==0x80)
+        li      s0, 0x80
+        beq     a0, s0, 1b              #  UTF-8 後続文字 (ip==0x80)
     2:  la      a0, DEL_AT_CURSOR       #  1文字消去
         jal     OutPString
         j       RL_next_char
@@ -314,12 +314,12 @@ cursor_left:
         jal     OutPString
     1:
         addi    s10, s10, -1            #  文字ポインタ-=1
-        add     t0, s6, s10
-        lbu     a0, (t0)                #  文字取得
+        add     s0, s6, s10
+        lbu     a0, (s0)                #  文字取得
         andi    a0, a0, 0xC0
-        li      t0, 0x80
-        beq     a0, t0, 1b              #  第2バイト以降のUTF-8文字
-        bltu    a0, t0, 2f              #  ASCII
+        li      s0, 0x80
+        beq     a0, s0, 1b              #  第2バイト以降のUTF-8文字
+        bltu    a0, s0, 2f              #  ASCII
         la      a0, CURSOR_LEFT         #  第1バイト発見、日本語は2回左
         jal     OutPString
     2:
@@ -342,8 +342,8 @@ cursor_right:
         la      a0, CURSOR_RIGHT
         jal     OutPString
 
-        add     t0, s6, s10
-        lbu     a0, (t0)                # 文字取得
+        add     s0, s6, s10
+        lbu     a0, (s0)                # 文字取得
         andi    a1, a0, 0x80
         bnez    a1, 1f                  # UTF-8多バイト文字の場合
         addi    s10, s10, 1             # ASCIIなら1バイトだけ
@@ -407,8 +407,8 @@ regist_history:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
 
-        add     t0, s6, s9
-        sb      zero, (t0)              #  write 0 at eol
+        add     s0, s6, s9
+        sb      zero, (s0)              #  write 0 at eol
         jal     check_history
         beq     a1, zero, 1f            #  同一行登録済み
 
@@ -488,8 +488,8 @@ disp_history:
         jal     NewLine
         addi    a2, a2, MAXLINE         # next history string
         addi    a3, a3, 1
-        li      t0, MAXHISTORY
-        bne     a3, t0, 1b              # check next
+        li      s0, MAXHISTORY
+        bne     a3, s0, 1b              # check next
 
         ld      a3, 32(sp)
         ld      a2, 24(sp)
@@ -514,8 +514,8 @@ erase_history:
     1:  sd      a0, (a2)                # set zero only first 8bytes
         addi    a2, a2, MAXLINE         # next history
         addi    a1, a1, 1
-        li      t0, MAXHISTORY
-        bne     a1, t0, 1b              # check next
+        li      s0, MAXHISTORY
+        bne     a1, s0, 1b              # check next
         ld      a2, 24(sp)
         ld      a1, 16(sp)
         ld      a0,  8(sp)
@@ -544,8 +544,8 @@ check_history:
         li      a2, 0                   # string top
     2:  lbu     a0, (s6)                # a0 <-- input buffer
         addi    s6, s6, 1
-        add     t0, s7, a2
-        lbu     a1, (t0)                # a1 <-- history line
+        add     s0, s7, a2
+        lbu     a1, (s0)                # a1 <-- history line
         bne     a0, a1, 3f              # different char
         beq     a0, zero, 4f            # eol found
         addi    a2, a2, 1               # next char
@@ -747,9 +747,9 @@ setup_cursor:
     1:  add     a2, s6, a1
         lbu     a0, (a2)
         andi    a0, a0, 0xC0
-        li      t0, 0x80                # 第2バイト以降のUTF-8文字
-        beq     a0, t0, 3f
-        bltu    a0, t0, 2f
+        li      s0, 0x80                # 第2バイト以降のUTF-8文字
+        beq     a0, s0, 3f
+        bltu    a0, s0, 2f
         la      a0, CURSOR_RIGHT
         jal     OutPString
     2:  la      a0, CURSOR_RIGHT
@@ -771,40 +771,40 @@ translate_key_seq:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
         jal     InChar
-        li      t0, '['
-        beq     a0, t0, 1f
+        li      s0, '['
+        beq     a0, s0, 1f
         li      a0, 0
         j       7f                      # return
 
     1:  jal     InChar
-        li      t0, 'A'
-        bne     a0, t0, 2f
+        li      s0, 'A'
+        bne     a0, s0, 2f
         li      a0, 'P' - 0x40          # ^P
         j       7f                      # return
 
-    2:  li      t0, 'B'
-        bne     a0, t0, 3f
+    2:  li      s0, 'B'
+        bne     a0, s0, 3f
         li      a0, 'N' - 0x40          # ^N
         j       7f                      # return
 
-    3:  li      t0, 'C'
-        bne     a0, t0, 4f
+    3:  li      s0, 'C'
+        bne     a0, s0, 4f
         li      a0, 'F' - 0x40          # ^F
         j       7f                      # return
 
-    4:  li      t0, 'D'
-        bne     a0, t0, 5f
+    4:  li      s0, 'D'
+        bne     a0, s0, 5f
         li      a0, 'B' - 0x40          # ^B
         j       7f                      # return
 
-    5:  li      t0, '3'                 # ^((3~ (Del)
-        bne     a0, t0, 6f
-        li      t0, '4'                 # ^((4~ (End)
+    5:  li      s0, '3'                 # ^((3~ (Del)
+        bne     a0, s0, 6f
+        li      s0, '4'                 # ^((4~ (End)
         j       7f                      # return
 
     6:  jal     InChar
-        li      t0, '~'
-        bne     a0, t0, 7f
+        li      s0, '~'
+        bne     a0, s0, 7f
         li      a0, 4                   # ^D
 
     7:
@@ -897,8 +897,8 @@ InsertFileName:
 
     1:  ld      a0, (t4)               # 部分ファイル名
         jal     StrLen                 # a1 = 部分ファイル名長
-        li      t0, 1                  # ひとつだけ一致?
-        bne     s9, t0, 2f             # 候補複数なら2fへ
+        li      s0, 1                  # ひとつだけ一致?
+        bne     s9, s0, 2f             # 候補複数なら2fへ
         ld      a0, (t3)               # FNArray[0]
         add     a3, a0, a1             # a3 = FNArray[0] + a1
         j       7f                     # 入力バッファに最後までコピー
@@ -912,15 +912,15 @@ InsertFileName:
     3:  addi    a4, s9, -1             # ファイル数-1
         ld      a0, (t3)               # 最初のファイル名と比較
         add     a3, a0, a1             # a3 = FNArray[0]+部分ファイル名長
-        add     t0, a3, a2
-        lbu     a0, (t0)               # a0 = (FNArray[0] + 一致長 + a2)
+        add     s0, a3, a2
+        lbu     a0, (s0)               # a0 = (FNArray[0] + 一致長 + a2)
 
-    4:  slli    t0, a4, 3
-        add     t0, t3, t0
-        ld      s4, (t0)               # s4 = &FNArray(a4)
+    4:  slli    s0, a4, 3
+        add     s0, t3, s0
+        ld      s4, (s0)               # s4 = &FNArray(a4)
         add     s4, s4, a1             # s4 = FNArray(a4) + 一致長
-        add     t0, s4, a2
-        lbu     s4, (t0)               # s4 = FNArray(a4) + 一致長 + a2
+        add     s0, s4, a2
+        lbu     s4, (s0)               # s4 = FNArray(a4) + 一致長 + a2
         bne     a0, s4, 5f             # 異なる文字発見
         addi    a4, a4, -1             # 次のファイル名
         bnez    a4, 4b                 # すべてのファイル名で繰り返し
@@ -930,24 +930,24 @@ InsertFileName:
 
     6:                                 # 複数あるが追加補完不可
         lbu     a0, (a3)               # 補完分をコピー
-        add     t0, s6, s10
-        sb      a0, (t0)               # 入力バッファに追加
+        add     s0, s6, s10
+        sb      a0, (s0)               # 入力バッファに追加
         addi    a2, a2, -1
         blt     a2, zero, 9f           # 補完部分コピー終了
         addi    a3, a3, 1              # 次の文字
         addi    s10, s10, 1
         j       6b                     #
 
-    7:  add     t0, s6, s10
+    7:  add     s0, s6, s10
     8:  lbu     a0, (a3)               # ファイル名をコピー
         addi    a3, a3, 1              # 次の文字
-        sb      a0, (t0)               # 入力バッファに追加
-        addi    t0, t0, 1
+        sb      a0, (s0)               # 入力バッファに追加
+        addi    s0, s0, 1
         bnez    a0, 8b                 # 文字列末の0で終了
         j       10f                    # コピー終了
     9:
-        add     t0, s6, s10            # 補完終了
-        sb      zero, (t0)             # 入力バッファ末を0
+        add     s0, s6, s10            # 補完終了
+        sb      zero, (s0)             # 入力バッファ末を0
     10:
         ld      a3, 32(sp)
         ld      a2, 24(sp)
@@ -978,10 +978,10 @@ ExtractFilename:
         li      s9, 0                   # FNCount=0
     1:                                  # 部分パス名の先頭を捜す
         lbu     a0, (a1)                # カーソル位置から前へ
-        li      t0, 0x20                # 空白はパス名の区切り
-        beq     a0, t0, 2f              # 空白なら次の処理
-        li      t0, '"'                 # " 二重引用符もパス名の区切り
-        beq     a0, t0, 2f              # 二重引用符でも次の処理
+        li      s0, 0x20                # 空白はパス名の区切り
+        beq     a0, s0, 2f              # 空白なら次の処理
+        li      s0, '"'                 # " 二重引用符もパス名の区切り
+        beq     a0, s0, 2f              # 二重引用符でも次の処理
         beq     a1, s6, 3f              # 行頭なら次の処理
         addi    a1, a1, -1              # 後ろから前に検索
         j       1b                      # もう一つ前を調べる
@@ -996,8 +996,8 @@ ExtractFilename:
 
     4:  addi    a3, a3, -1              # 入力済み文字列最終アドレス
         lbu     a0, (a3)                # 入力済みのパスの / を探す
-        li      t0, '/'
-        beq     a0, t0, 5f              # 発見したら5f
+        li      s0, '/'
+        beq     a0, s0, 5f              # 発見したら5f
         bne     a1, a3, 4b              # 前方にさらに/を探す
         j       6f                      # a1=a3 なら「/」は無い
 
@@ -1060,8 +1060,8 @@ GetDirectoryEntry:
         jal     GetFileStat             # ファイル情報を取得
         la      a1, file_stat
         ld      a0, 16(a1)              # file_stat.st_mode
-        li      t0, S_IFDIR
-        and     a0, a0, t0              # ディレクトリ?
+        li      s0, S_IFDIR
+        and     a0, a0, s0              # ディレクトリ?
         addi    a1, a4, 19              # ファイル名先頭アドレス
         jal     CopyFilename            # 一致するファイル名を収集
 
@@ -1129,7 +1129,7 @@ GetFileStat:
         sb      a1, (s4)                # 文字列末(0)をマーク
         li      a0, AT_FDCWD            # 第1引数 dirfd
         mv      a1, a3                  # パス名先頭アドレス
-        la      a2, file_stat           # file_stat0のアドレス
+        la      a2, file_stat           # file_stas0のアドレス
         li      a3, 0                   # flags
         li      a7, sys_fstatat         # ファイル情報の取得
         ecall
@@ -1162,35 +1162,35 @@ CopyFilename:
         sd      a1, 16(sp)
         sd      a0,  8(sp)
         sd      ra,  0(sp)
-        li      t0, MAX_FILE            # 256
-        bgeu    s9, t0, 5f              # FNCount>=MAX_FILEなら終了
+        li      s0, MAX_FILE            # 256
+        bgeu    s9, s0, 5f              # FNCount>=MAX_FILEなら終了
         mv      a3, a1                  # ファイル名先頭アドレス
         mv      a4, a0                  # ディレクトリフラグ
         ld      a2, (t4)                # t4:PartialName
     1:  lbu     a0, (a2)                # 部分ファイル名
         addi    a2, a2, 1
         beqz    a0, 2f                  # 文字列末?部分ファイル名は一致
-        lbu     t0, (a1)                # ファイル名
+        lbu     s0, (a1)                # ファイル名
         addi    a1, a1, 1
-        bne     a0, t0, 5f              # 1文字比較  異なれば終了
+        bne     a0, s0, 5f              # 1文字比較  異なれば終了
         j       1b                      # 次の文字を比較
 
     2:  #  一致したファイル名が格納できるかチェック
         mv      a0, a3                  # ファイル名先頭アドレス
         jal     StrLen                  # ファイル名の長さを求める
         mv      a2, a1                  # ファイル名の長さを退避
-        addi    t0, a1, 2               # 文字列末の /0
-        add     t0, s8, t0              # 追加時の最終位置 s8:FNBPointer
+        addi    s0, a1, 2               # 文字列末の /0
+        add     s0, s8, s0              # 追加時の最終位置 s8:FNBPointer
                                         # FileNameBufferの直後(FNArray0)
-        bgeu    t0, t3, 5f              # バッファより大きくなる:終了
+        bgeu    s0, t3, 5f              # バッファより大きくなる:終了
         #  ファイル名バッファ中のファイル名先頭アドレスを記録
-        slli    t0, s9, 3
-        add     t0, t3, t0
-        sd      s8, (t0)                # FNArray[FNCount]=s8
+        slli    s0, s9, 3
+        add     s0, t3, s0
+        sd      s8, (s0)                # FNArray[FNCount]=s8
         addi    s9, s9, 1               # ファイル名数の更新
 
-    3:  lbu     t0, (a3)                # ファイル名のコピー
-        sb      t0, (s8)
+    3:  lbu     s0, (a3)                # ファイル名のコピー
+        sb      s0, (s8)
         addi    a3, a3, 1
         addi    s8, s8, 1
         addi    a2, a2, -1              # ファイル名の長さを繰り返す
@@ -1224,9 +1224,9 @@ ListFile:
         jal     NewLine
         li      a3, 0                   # 個数
     1:
-        slli    t0, a3, 3
-        add     t0, t3, t0              # t3:ファイル名へのポインタ配列
-        ld      a2, (t0)                # FNArray + FNCount * 8
+        slli    s0, a3, 3
+        add     s0, t3, s0              # t3:ファイル名へのポインタ配列
+        ld      a2, (s0)                # FNArray + FNCount * 8
         mv      a0, a3
         li      a1, 4                   # 4桁
         jal     PrintRight              # 番号表示
@@ -1293,8 +1293,8 @@ SET_TERMIOS:
         la      a1, termios_mode
         lwu     a1, (a1)
         and     a0, a0, a1
-        li      t0, ISIG
-        or      a0, a0, t0
+        li      s0, ISIG
+        or      a0, a0, s0
         sw      a0, 12(a2)
         li      a0, 0
         la      a1, nt_c_cc

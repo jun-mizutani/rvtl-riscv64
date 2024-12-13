@@ -19,36 +19,36 @@ SystemCall: # return a0
         sd      a2, 16(sp)
         sd      a1,  8(sp)
         sd      ra,  0(sp)
-        li      t0, 'a'              # a にシステムコール番号
-        slli    t0, t0, 3
-        add     t0, gp, t0           # t0 = t0 * 8 + VarArea
-        ld      a7, 0(t0)            # a7 <- [t0*8+VarArea]
+        li      s0, 'a'              # a にシステムコール番号
+        slli    s0, s0, 3
+        add     s0, gp, s0           # s0 = s0 * 8 + VarArea
+        ld      a7, 0(s0)            # a7 <- [s0*8+VarArea]
         li      a6, SYSCALLMAX
         bgt     a7, a6, 1f
-        li      t0, 'b'              # b にシステムコール引数1
-        slli    t0, t0, 3
-        add     t0, gp, t0           # t0 = t0 * 8 + VarArea
-        ld      a0, 0(t0)            # a0 <- [t0*8+VarArea]
-        li      t0, 'c'              # c にシステムコール引数2
-        slli    t0, t0, 3
-        add     t0, gp, t0           # t0 = t0 * 8 + VarArea
-        ld      a1, 0(t0)            # a1 <- [t0*8+VarArea]
-        li      t0, 'd'              # d にシステムコール引数3
-        slli    t0, t0, 3
-        add     t0, gp, t0           # t0 = t0 * 8 + VarArea
-        ld      a2, 0(t0)            # a2 <- [t0*8+VarArea]
-        li      t0, 'e'              # e にシステムコール引数4
-        slli    t0, t0, 3
-        add     t0, gp, t0           # t0 = t0 * 8 + VarArea
-        ld      a3, 0(t0)            # a3 <- [t0*8+VarArea]
-        li      t0, 'f'              # f にシステムコール引数5
-        slli    t0, t0, 3
-        add     t0, gp, t0           # t0 = t0 * 8 + VarArea
-        ld      a4, 0(t0)            # a4 <- [t0*8+VarArea]
-        li      t0, 'g'              # g にシステムコール引数6
-        slli    t0, t0, 3
-        add     t0, gp, t0           # t0 = t0 * 8 + VarArea
-        ld      a5, 0(t0)            # a5 <- [t0*8+VarArea]
+        li      s0, 'b'              # b にシステムコール引数1
+        slli    s0, s0, 3
+        add     s0, gp, s0           # s0 = s0 * 8 + VarArea
+        ld      a0, 0(s0)            # a0 <- [s0*8+VarArea]
+        li      s0, 'c'              # c にシステムコール引数2
+        slli    s0, s0, 3
+        add     s0, gp, s0           # s0 = s0 * 8 + VarArea
+        ld      a1, 0(s0)            # a1 <- [s0*8+VarArea]
+        li      s0, 'd'              # d にシステムコール引数3
+        slli    s0, s0, 3
+        add     s0, gp, s0           # s0 = s0 * 8 + VarArea
+        ld      a2, 0(s0)            # a2 <- [s0*8+VarArea]
+        li      s0, 'e'              # e にシステムコール引数4
+        slli    s0, s0, 3
+        add     s0, gp, s0           # s0 = s0 * 8 + VarArea
+        ld      a3, 0(s0)            # a3 <- [s0*8+VarArea]
+        li      s0, 'f'              # f にシステムコール引数5
+        slli    s0, s0, 3
+        add     s0, gp, s0           # s0 = s0 * 8 + VarArea
+        ld      a4, 0(s0)            # a4 <- [s0*8+VarArea]
+        li      s0, 'g'              # g にシステムコール引数6
+        slli    s0, s0, 3
+        add     s0, gp, s0           # s0 = s0 * 8 + VarArea
+        ld      a5, 0(s0)            # a5 <- [s0*8+VarArea]
         ecall
     1:
         ld      a7, 48(sp)
