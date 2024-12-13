@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------
 #   Mersenne Twister
 #   file : mt19937.s
-#     Rewritten in RISC-V Assembly by Jun Mizutani 2024/11/07.
+#     Rewritten in RISC-V Assembly by Jun Mizutani 2024/12/13.
 #     From original code in C by Takuji Nishimura(mt19937int.c).
 #     SISC-V version Copyright (C) 2024 Jun Mizutani.
 #---------------------------------------------------------------------
@@ -61,11 +61,11 @@ sgenrand:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
         la      s3, mt
-        la      s7, N 
+        la      s7, N
         lw      s4, (s7)                # N
         lwu     s5, 12(s7)              # nffff0000
         lw      s6, 8(s7)               # n69069
-        mv      a2, zero                # I=0
+        li      a2, 0                   # I=0
     1:
         and     a1, a0, s5              # A = seed & 0xffff0000
         mul     a0, s6, a0              # a0 = seed * 69069
@@ -127,7 +127,7 @@ genrand:
         lwu     s5, 4(s9)               # M
         lwu     s6, 24(s9)              # UPPER_MASK
         lwu     s7, 28(s9)              # LOWER_MASK
-        mv      s1, zero                # K=0
+        li      s1, 0                   # K=0
     1:  slli    t0, s1, 2
         add     s10, s3, t0
         lwu     a0, (s10)               # mt[K]
@@ -159,7 +159,7 @@ genrand:
         add     s10, s3, t0
         lwu     a0, (s10)               # mt[K]
         and     a0, a0, s6              # UPPER_MASK
-        mv      a3, zero                # J=0
+        li      a3, 0                   # J=0
         jal     rnd_common2             # return Y>>1:a0,Z:a1
         addi    a2, s5, -1              # 396
         jal     rnd_common
@@ -167,7 +167,7 @@ genrand:
         slli    t0, a2, 2
         add     t0, s3, t0
         sw      a1, (t0)                # mt[623]=P^Q^Z
-        mv      s2, zero                # mti=0
+        li      s2, 0                   # mti=0
     3:  slli    t0, s2, 2
         add     t0, s3, t0
         lwu     a3, (t0)                # y=mt[mti]
@@ -217,7 +217,7 @@ genrand:
         and     a1, a1, s7              # LOWER_MASK
         or      a3, a0, a1              # y
         srli    a0, a3, 1               # a0=(y>>1)
-        mv      a1, zero
+        li      a1, 0
         andi    t0, a3, 1
         beqz    t0, 1f
         lwu     a1, 32(s9)              # MATRIX_A

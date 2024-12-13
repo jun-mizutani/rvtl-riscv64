@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : vtllib.s
-#  2024/11/15
+#  2024/12/13
 #  Copyright (C) 2003-2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  vtllib.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -163,11 +163,11 @@ RL:
         sd      a2, 16(sp)
         sd      a1,  8(sp)
         sd      ra,  0(sp)
-        mv      s9, zero                #  行末位置
+        li      s9, 0                   #  行末位置
 RL_0:
         la      s8, HistLine            #  history string ptr
         mv      s6, a1                  #  Input Buffer
-        mv      a2, zero
+        li      a2, 0
         add     a3, s6, s9              # a3 = Input Buffer + 行末位置
         sb      a2, (a3)                #  mark EOL
         mv      s7, a0                  #  BufferSize
@@ -470,7 +470,7 @@ disp_history:
         sd      ra,  0(sp)
 
         la      a2, history
-        mv      a3, zero                # no. of history lines
+        li      a3, 0                   # no. of history lines
     1:  la      a1, HistLine            # current history
         ld      a0, (a1)
         bne     a3, a0, 2f
@@ -509,8 +509,8 @@ erase_history:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
         la      a2, history
-        mv      a1, zero                # no. of history lines
-        mv      a0, zero
+        li      a1, 0                   # no. of history lines
+        li      a0, 0
     1:  sd      a0, (a2)                # set zero only first 8bytes
         addi    a2, a2, MAXLINE         # next history
         addi    a1, a1, 1
@@ -541,7 +541,7 @@ check_history:
         la      s7, history
         li      a3, MAXHISTORY          # no. of history lines
     1:  mv      s6, a4                  # restore input buffer top
-        mv      a2, zero                # string top
+        li      a2, 0                   # string top
     2:  lbu     a0, (s6)                # a0 <-- input buffer
         addi    s6, s6, 1
         add     t0, s7, a2
@@ -556,7 +556,7 @@ check_history:
         li      a1, 1                   # compare all, not found
         j       5f
 
-    4:  mv      a1, zero                # found
+    4:  li      a1, 0                   # found
     5:  ld      a4, 24(sp)
         ld      s7, 16(sp)
         ld      s6,  8(sp)
@@ -686,7 +686,7 @@ get_decimal:
         jal     InChar
         li      a3, '0'
         sub     a0, a0, a3
-        mv      a1, zero
+        li      a1, 0
         li      a2, 10
     1:  mul     a2, a1, a0              #
         add     a1, a0, a2
@@ -742,7 +742,7 @@ setup_cursor:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
         jal     LineTop
-        mv      a1, zero
+        li      a1, 0
         beq     a1, s10, 4f
     1:  add     a2, s6, a1
         lbu     a0, (a2)
@@ -773,7 +773,7 @@ translate_key_seq:
         jal     InChar
         li      t0, '['
         beq     a0, t0, 1f
-        mv      a0, zero
+        li      a0, 0
         j       7f                      # return
 
     1:  jal     InChar
@@ -908,7 +908,7 @@ InsertFileName:
         #  複数が一致している場合なるべく長く補完
         #  最初のエントリーと次々に比較、すべてのエントリーが一致していたら
         #  比較する文字を1つ進める。一致しない文字が見つかったら終わり
-        mv      a2, zero               # 追加して補完できる文字数
+        li      a2, 0                  # 追加して補完できる文字数
     3:  addi    a4, s9, -1             # ファイル数-1
         ld      a0, (t3)               # 最初のファイル名と比較
         add     a3, a0, a1             # a3 = FNArray[0]+部分ファイル名長
@@ -975,7 +975,7 @@ ExtractFilename:
         mv      a1, a3
         sb      zero, (a1)              # 入力済み文字列末をマーク
         mv      s8, s7                  # FNBPointer=FileNameBuffer
-        mv      s9, zero                # FNCount=0
+        li      s9, 0                   # FNCount=0
     1:                                  # 部分パス名の先頭を捜す
         lbu     a0, (a1)                # カーソル位置から前へ
         li      t0, 0x20                # 空白はパス名の区切り
@@ -992,7 +992,7 @@ ExtractFilename:
         ld      a0,  8(sp)              # 何もない(長さ0)なら終了
         ld      ra,  0(sp)
         addi    sp, sp, 16
-        ret 
+        ret
 
     4:  addi    a3, a3, -1              # 入力済み文字列最終アドレス
         lbu     a0, (a3)                # 入力済みのパスの / を探す
@@ -1016,7 +1016,7 @@ ExtractFilename:
         sb      a0, (s4)                # 文字列末をマーク
         addi    a2, a2, -1
         bnez    a2, 7b
-    8:  
+    8:
         ld      a0,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 16
@@ -1130,7 +1130,7 @@ GetFileStat:
         li      a0, AT_FDCWD            # 第1引数 dirfd
         mv      a1, a3                  # パス名先頭アドレス
         la      a2, file_stat           # file_stat0のアドレス
-        mv      a3, zero                # flags
+        li      a3, 0                   # flags
         li      a7, sys_fstatat         # ファイル情報の取得
         ecall
         bgt     a0, zero, 4f            # valid buffer length
@@ -1162,7 +1162,7 @@ CopyFilename:
         sd      a1, 16(sp)
         sd      a0,  8(sp)
         sd      ra,  0(sp)
-        li      t0, MAX_FILE            # 256  
+        li      t0, MAX_FILE            # 256
         bgeu    s9, t0, 5f              # FNCount>=MAX_FILEなら終了
         mv      a3, a1                  # ファイル名先頭アドレス
         mv      a4, a0                  # ディレクトリフラグ
@@ -1198,7 +1198,7 @@ CopyFilename:
 
         beqz    a4, 4f                  # ディレクトリフラグ
         li      a0, '/'                 # ディレクトリ名なら"/"付加
-        sb      a0, (s8)               
+        sb      a0, (s8)
     4:  sb      zero, (s8)              # 文字列末(0)の書き込み
         addi    s8, s8, 2               # FNBPointer を更新
     5:
@@ -1222,7 +1222,7 @@ ListFile:
         sd      a0,  8(sp)
         sd      ra,  0(sp)
         jal     NewLine
-        mv      a3, zero                # 個数
+        li      a3, 0                   # 個数
     1:
         slli    t0, a3, 3
         add     t0, t3, t0              # t3:ファイル名へのポインタ配列
@@ -1296,11 +1296,11 @@ SET_TERMIOS:
         li      t0, ISIG
         or      a0, a0, t0
         sw      a0, 12(a2)
-        mv      a0, zero
+        li      a0, 0
         la      a1, nt_c_cc
         li      a0, 1
         sb      a0, VMIN(a1)
-        mv      a0, zero
+        li      a0, 0
         sb      a0, VTIME(a1)
         la      a1, new_termios
         jal     tcsetattr
@@ -1331,9 +1331,9 @@ SET_TERMIOS2:
         or      a0, a0, a1
         ori     a0, a0, ISIG
         sw      a0, 12(a2)
-        mv      a0, zero
+        li      a0, 0
         la      a1, nt_c_cc
-        mv      a0, zero
+        li      a0, 0
         sb      a0, VMIN(a1)
         li      a0, 1
         sb      a0, VTIME(a1)
@@ -1390,7 +1390,7 @@ IOCTL:
         sd      ra,  0(sp)
         mv      a2, a1                  # set arg
         mv      a1, a0                  # set cmd
-        mv      a0, zero                # 0 : to stdin
+        li      a0, 0                   # 0 : to stdin
         li      a7, sys_ioctl
         ecall
 .ifdef DETAILED_MSG
@@ -1415,11 +1415,11 @@ RealKey:
         sd      a1,  8(sp)
         sd      ra,  0(sp)
         la      a3, nt_c_cc
-        mv      a0, zero
+        li      a0, 0
         sb      a0, VMIN(a3)
         la      a1, new_termios
         jal     tcsetattr
-        mv      a0, zero                # a0  stdin
+        li      a0, 0                   # a0  stdin
         addi    a1, sp, 8               # a1(stack) address
         li      a2, 1                   # a2  length
         li      a7, sys_read
@@ -1450,7 +1450,7 @@ WinSize:
         sd      a2, 16(sp)
         sd      a1,  8(sp)
         sd      ra,  0(sp)
-        mv      a0, zero                # to stdout
+        li      a0, 0                   # to stdout
         li      a1, TIOCGWINSZ          # get wondow size
         la      a2, winsize
         li      a7, sys_ioctl

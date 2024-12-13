@@ -89,11 +89,11 @@ _start:
         sd      a3, 24(a4)              # vtl用の引数の個数 (argc_vtl)
 
     4:  # argv[0]="xxx/rvtlw" ならば cgiモード
-        mv      a2, zero
+        li      a2, 0
         la      a3, cginame             # 文字列 'wltvr',0
         ld      a1, 8(a4)               # argvp
         ld      a0, (a1)                # argv[0]
-        mv      a5, zero                # cgiflag = 0
+        li      a5, 0                   # cgiflag = 0
     5:  lbu     a6, (a0)                # argv[0]の文字列末のゼロを検索
         addi    a0, a0, 1               # 文字列の最終文字位置(w)
         bne     a6, zero, 5b            # a1!=0 then 5b
@@ -113,7 +113,7 @@ _start:
         la      gp, VarArea             # gp の内容は常に VarArea
 
         # システム変数の初期値を設定
-        mv      a0, zero                # 0 を渡して現在値を得る
+        li      a0, 0                   # 0 を渡して現在値を得る
         li      a7, sys_brk             # brk取得
         ecall
         mv      t2, a0                  # 初期brk値
@@ -141,7 +141,7 @@ _start:
         jal     SET_TERMIOS             # 端末のローカルエコーOFF
 
         # ctrl-C, ctrl-Z用のシグナルハンドラを登録する
-        mv      a1, zero                # シグナルハンドラ設定
+        li      a1, 0                   # シグナルハンドラ設定
         la      a4, new_sig
         la      a0, SigIntHandler
         sd      a0, (a4)                # nsa_sighandler
@@ -155,7 +155,7 @@ _start:
 
         li      a0, SIGINT              # ^C
         mv      a1, a4                  # new_sig
-        mv      a2, zero                # old_sig
+        li      a2, 0                   # old_sig
         li      a3, 8                   # size
         li      a7, sys_rt_sigaction
         ecall
@@ -193,7 +193,7 @@ _start:
         j       Launch
     go:
         jal     WarmInit2               # コンソール入力指定と初期化
-        mv      a0, zero
+        li      a0, 0
         la      a1, counter
         sd      a0, (a1)                # コマンド実行カウント初期化
         addi    a1, a1, 16              # current_arg
@@ -302,7 +302,7 @@ ReadLine:
         jal     READ_LINE               # 編集機能付キー入力
         mv      t2, a1                  # 入力バッファ先頭
         mv      t1, t2
-        mv      s1, zero                # not EOL
+        li      s1, 0                   # not EOL
         j       MainLoop
 
 #-------------------------------------------------------------------------
@@ -323,7 +323,7 @@ ReadMem:
         # コード末ならばコンソール入力(ダイレクトモード)に設定し、
         # EOLを1とすることで、次行取得を促す
     1:  jal     CheckCGI                # CGIモードなら終了
-        mv      a0, zero
+        li      a0, 0
         li      s1, 1                   # EOL=yes
         sb      a0, -3(gp)              # ExecMode=Direct
         j       MainLoop
@@ -331,7 +331,7 @@ ReadMem:
     2:  # 現在の行番号を # に設定し、コード部分先頭アドレスを t2 に設定
         jal     SetLineNo               # 行番号を # に設定
         addi    t2, t1, 8               # 行のコード先頭
-        mv      s1, zero                # EOL=no
+        li      s1, 0                   # EOL=no
         j       MainLoop
 
 #-------------------------------------------------------------------------
@@ -400,7 +400,7 @@ GetString:
         sd      a2, 16(sp)
         sd      a1,  8(sp)
         sd      ra,  0(sp)
-        mv      a2, zero
+        li      a2, 0
         la      a3, FileName
         li      a1, FNAMEMAX
     1: # next:
@@ -413,7 +413,7 @@ GetString:
         addi    a2, a2, 1
         bltu    a2, a1, 1b
     2: # exit:
-        mv      tp, zero
+        li      tp, 0
         add     t0, a3, a2
         sb      tp, (t0)
         ld      a3, 24(sp)
@@ -432,7 +432,7 @@ GetString2:
         sd      a3, 16(sp)
         sd      a2,  8(sp)
         sd      a0, (sp)
-        mv      a2, zero
+        li      a2, 0
         la      a3, FileName
         li      a4, FNAMEMAX
     1:
@@ -918,7 +918,7 @@ Com_Return:
         addi    sp, sp, -16
         sd      ra, (sp)
         jal     PopLine                 # 現在行の後ろは無視
-        mv      s1, zero                # not EOL
+        li      s1, 0                   # not EOL
         ld      ra, (sp)
         addi    sp, sp, 16
         ret
@@ -1017,7 +1017,7 @@ Com_DO:
         add     a2, gp, t0
         addi    a2, a2, 1024
         ld      t1, (a2)                # gp+(a1-2)*8+1024
-        mv      s1, zero                # not EOL
+        li      s1, 0                   # not EOL
         j       8f                      # return
 
     7:  li      a0, 1                   # DO
@@ -1067,7 +1067,7 @@ SetVar:         # 変数代入
         j       MainLoop                # 戻る
 
     1:  # for
-        mv      t0, zero
+        li      t0, 0
         sb      t0, -8(gp)              # 昇順(0)
         jal     Exp                     # 終了値をa0に設定
         bge     a0, a1, 2f              # 開始値(a1)と終了値(a0)を比較
@@ -1119,7 +1119,7 @@ SetVar:         # 変数代入
         li      t0, '"                  # "
         bne     tp, t0, s_sp0
 
-        mv      a2, zero                # 文字列定数を配列にコピー
+        li      a2, 0                   # 文字列定数を配列にコピー
         jal     GetChar                 # skip double quote
     1:                                  # next char
         jal     GetChar
@@ -1132,7 +1132,7 @@ SetVar:         # 変数代入
         li      t0, FNAMEMAX
         bltu    a2, t0, 1b
     2:                                  # done
-        mv      tp, zero
+        li      tp, 0
         add     t0, s0, a2
         sb      tp, (t0)
         addi    t0, gp, '%' * 8
@@ -1147,7 +1147,7 @@ SetVar:         # 変数代入
         jal     RangeCheck              # コピー先を範囲チェック
         mv      s0, a1                  # コピー先復帰
         bnez    a2, s_range_err         # 範囲外をアクセス
-        mv      a2, zero
+        li      a2, 0
     1:  lbu     a1, (a0)
         sb      a1, (s0)
         addi    a0, a0, 1
@@ -1208,7 +1208,7 @@ RangeCheck:
     1:  li      a2, -1
         j       3f
 
-    2:  mv      a2, zero                # a0 = 0
+    2:  li      a2, 0                   # a0 = 0
     3:  ld      a1,  8(sp)
         ld      a0, (sp)
         addi    sp, sp, 16
@@ -1365,7 +1365,7 @@ Exp:
         li      a0, 1
         j       e_next
     e_false:
-        mv      a0, zero                # 0:偽
+        li      a0, 0                   # 0:偽
         j       e_next
     e_exp7:
         li      t0, '<'                 # <
@@ -1481,11 +1481,11 @@ Com_USleep:
         sd      a1, (a4)                # sec
         mul     a0, a0, a2              # usec --> nsec
         sd      a0, 8(a4)               # nsec
-        mv      a0, zero
-        mv      a1, zero
-        mv      a2, zero
-        mv      a3, zero
-        mv      a5, zero                # 第6引数 NULL
+        li      a0, 0
+        li      a1, 0
+        li      a2, 0
+        li      a3, 0
+        li      a5, 0                   # 第6引数 NULL
         li      a7, sys_pselect6
         ecall
         jal     CheckError
@@ -1621,7 +1621,7 @@ Factor:
         jal     GetChar                 # skip '\'
         jal     Exp
         ld      a2, envp
-        mv      a1, zero
+        li      a1, 0
     4:
         slli    t0, a1, 3
         add     t0, a2, t0
@@ -1744,7 +1744,7 @@ Factor:
         bne     tp, t0, f_var
         li      a2, 4
         sb      a2, -7(gp)              # No string! ExpError
-        mv      a1, zero
+        li      a1, 0
         j       f_exit
 
     f_var:
@@ -1817,7 +1817,7 @@ CharConst:
         sd      a2, 16(sp)
         sd      a0,  8(sp)
         sd      ra, (sp)
-        mv      a1, zero
+        li      a1, 0
         li      a0, 4                   # 文字定数は4バイトまで
     1:
         jal     GetChar
@@ -1848,7 +1848,7 @@ Hex:
         sd      a2, 16(sp)
         sd      a0,  8(sp)
         sd      ra, (sp)
-        mv      a1, zero
+        li      a1, 0
         mv      a2, a1
     1:
         jal     GetChar                 # $ の次の文字
@@ -1972,7 +1972,7 @@ LineEdit:
         mv      t2, a1                  # 入力バッファ先頭
         mv      t1, t2
     4:
-        mv      s1, zero                # EOL=no, 入力済み
+        li      s1, 0                   # EOL=no, 入力済み
         ld      a0,  8(sp)
         ld      ra, (sp)
         addi    sp, sp, 16
@@ -2266,7 +2266,7 @@ EditMode:
 # a1-a5 破壊
 #-------------------------------------------------------------------------
 LineInsert:
-        mv      a1, zero                # 挿入する行のサイズを計算
+        li      a1, 0                   # 挿入する行のサイズを計算
     1:  add     t0, t2, a1              # t2:入力バッファ先頭
         lbu     a2, (t0)                #
         addi    a1, a1, 1               # 次の文字
@@ -2359,7 +2359,7 @@ LineSearch_nextline:
         j       1b
     2:  li      a1, 1
         ret
-    3:  mv      a1, zero
+    3:  li      a1, 0
         ret
 
 #-------------------------------------------------------------------------
@@ -2372,8 +2372,8 @@ Decimal:
         sd      a3, 24(sp)              # 数値
         sd      a2, 16(sp)              # １なら負
         sd      ra, (sp)
-        mv      a2, zero                # 正の整数を仮定
-        mv      a3, zero
+        li      a2, 0                   # 正の整数を仮定
+        li      a3, 0
         li      a1, 10
         li      t0, '+'
         beq     tp, t0, 1f
@@ -2394,7 +2394,7 @@ Decimal:
         bgez    a0, 3b
         beq     a2, zero, 4f            # 数は正か？
         sub     a3, zero, a3            # 負にする
-    4:  mv      a1, zero
+    4:  li      a1, 0
     5:  mv      a0, a3
         ld      a3, 24(sp)
         ld      a2, 16(sp)
@@ -2415,7 +2415,7 @@ PutDecimal:
         sd      ra, (sp)
         mv      a4, sp
         addi    sp, sp, -32             # allocate buffer
-        mv      a2, zero                # counter
+        li      a2, 0                   # counter
         li      a3, 10                  #
     1:  divu    t0, a0, a3              # a0/a1 = a0...a1
         remu    a1, a0, a3
@@ -2479,7 +2479,7 @@ IsAlpha1:
         ret
     1:  li      t0, '['
         bgeu    tp, t0, 0b              # tp >= '[' return a0=-1
-        mv      a0, zero                # 'A' < tp <'Z' return a0=0
+        li      a0, 0                   # 'A' < tp <'Z' return a0=0
         ret
 
 IsAlpha2:
@@ -2489,7 +2489,7 @@ IsAlpha2:
         ret
     1:  li      t0, '{'
         bgeu    tp, t0, 0b              # tp >= '[' return a0=-1
-        mv      a0, zero                # 'a' < tp <'z' return a0=0
+        li      a0, 0                   # 'a' < tp <'z' return a0=0
         ret
 
 IsAlphaNum:
@@ -2508,7 +2508,7 @@ IsAlphaNum:
 READ_FILE:
         addi    sp, sp, -16
         sd      ra, (sp)
-        mv      a3, zero                #
+        li      a3, 0                   #
         la      a1, input2              # 入力バッファアドレス
     1:
         ld      a0, -16(gp)             # FileDesc
@@ -2696,7 +2696,7 @@ Com_NewLine:
 Com_String:
         addi    sp, sp, -16
         sd      ra, (sp)
-        mv      a1, zero
+        li      a1, 0
         mv      a0, t2
     1:  jal     GetChar
         li      t0, '"                  # "
@@ -2766,7 +2766,7 @@ Com_GO_go:
         sb      a0, -3(gp)              # ExecMode=Memory
         jal     SetLineNo2              # 行番号を # に設定
         addi    t2, t1, 8               # 次行先頭
-        mv      s1, zero                # EOL=no
+        li      s1, 0                   # EOL=no
         ld      ra, (sp)
         addi    sp, sp, 16
         ret
@@ -2826,7 +2826,7 @@ LabelScan:
         bne     tp, t0, 7f              # ラベルでなければ
         # ラベルを登録
         add     a1, a1, 1               # ラベル文字先頭
-        mv      a2, zero                # ラベル長
+        li      a2, 0                   # ラベル長
     5:
         add     t0, t1, a1
         lbu     tp, (t0)                # 1文字取得
@@ -2842,7 +2842,7 @@ LabelScan:
         j       5b                      # 次の文字
 
     6: # registerd
-        mv      tp, zero
+        li      tp, 0
         add     t0, a3, a2
         sb      tp, (t0)                # ラベル文字列末
         lw      tp, (t1)                # 次行オフセット
@@ -2888,7 +2888,7 @@ LabelSearch:
         ld      a5, (a6)                # テーブル最終登録位置
 
     1:
-        mv      a2, zero                # ラベル長
+        li      a2, 0                   # ラベル長
     2:
         add     t0, t2, a2              # 読み取り中のソース位置
         lbu     tp, (t0)                # ソース1文字取得
@@ -2909,7 +2909,7 @@ LabelSearch:
         sd      a1, (t0)                # ラベルの次行先頭を設定
         add     t2, t2, a2
         jal     GetChar
-        mv      a0, zero                # 見つかった a0 = 0
+        li      a0, 0                   # 見つかった a0 = 0
         ld      a4,  8(sp)
         ld      ra, (sp)
         addi    sp, sp, 16
@@ -2922,7 +2922,7 @@ LabelSearch:
         j       1b                      # 次のテーブルエントリ
 
     7:  # not found:
-        mv      a2, zero
+        li      a2, 0
         jal     Skip_excess             # ラベルを空白か行末まで読飛ばし
         li      a0, -1
         ld      a4,  8(sp)
@@ -3342,14 +3342,14 @@ Com_FileRead:
         beqz    a0, 3f
         bltz    a0, SYS_Error
         sd      a0, -24(gp)             # 第１引数 : fd
-        mv      a1, zero                # 第２引数 : offset = 0
+        li      a1, 0                   # 第２引数 : offset = 0
         li      a2, SEEK_END            # 第３引数 : origin
         li      a7, sys_lseek           # ファイルサイズを取得
         ecall
 
         mv      a3, a0                  # file_size 退避
         ld      a0, -24(gp)             # 第１引数 : fd
-        mv      a1, zero                # 第２引数 : offset=0
+        li      a1, 0                   # 第２引数 : offset=0
         mv      a2, a1                  # 第３引数 : origin=0
         li      a7, sys_lseek           # ファイル先頭にシーク
         ecall
@@ -3437,16 +3437,16 @@ Com_Exec:
         mv      t1, a1                  # リダイレクト先ファイル名
         addi    a6, a3, 1               # 子プロセスの数
         la      t6, exarg               # char ** argp
-        mv      s0, zero                # 先頭プロセス
+        li      s0, 0                   # 先頭プロセス
         li      t0, 1
         bgtu    a6, t0, 2f              # パイプが必要
 
         # パイプ不要な子プロセスを1つだけ生成
         li      a0, SIGCHLD             # clone_flags
-        mv      a1, zero                # newsp
-        mv      a2, zero                # parent_tidptr
-        mv      a3, zero                # child_tidptr
-        mv      a4, zero                # tls_val
+        li      a1, 0                   # newsp
+        li      a2, 0                   # parent_tidptr
+        li      a3, 0                   # child_tidptr
+        li      a4, 0                   # tls_val
         li      a7, sys_clone           # as sys_fork
         ecall
         jal     CheckError
@@ -3456,7 +3456,7 @@ Com_Exec:
     2:  # パイプが必要な子プロセスを2つ以上生成する
         la      t2, ipipe               # パイプをオープン
         mv      a0, t2                  # t2 に pipe_fd 配列先頭
-        mv      a1, zero                # flag = 0
+        li      a1, 0                   # flag = 0
         li      a7, sys_pipe2           # pipe システムコール
         ecall
         jal     CheckError
@@ -3465,10 +3465,10 @@ Com_Exec:
         # fork
         #------------------------------------------------------------
         li      a0, SIGCHLD             # clone_flags
-        mv      a1, zero                # newsp
-        mv      a2, zero                # parent_tidptr
-        mv      a3, zero                # child_tidptr
-        mv      a4, zero                # tls_val
+        li      a1, 0                   # newsp
+        li      a2, 0                   # parent_tidptr
+        li      a3, 0                   # child_tidptr
+        li      a4, 0                   # tls_val
         li      a7, sys_clone           # as sys_fork
         ecall
         beqz    a0, child               # pid が 0 なら子プロセスの処理
@@ -3525,7 +3525,7 @@ child:
         jal     fwopen                  # a0 = オープンした fd
         mv      s4, a0
         li      a1, 1                   # 標準出力をファイルに差替え
-        mv      a2, zero                # flag = 0
+        li      a2, 0                   # flag = 0
         li      a7, sys_dup3            # dup2 システムコール
         ecall
         jal     CheckError
@@ -3536,7 +3536,7 @@ child:
 pipe_out:                               # 標準出力をパイプに
         ld      a0, 4(t2)               # 新パイプの書込み fd
         li      a1, 1                   # 標準出力
-        mv      a2, zero                # flag = 0
+        li      a2, 0                   # flag = 0
         li      a7, sys_dup3            # dup2 システムコール
         ecall
         jal     CheckError
@@ -3546,8 +3546,8 @@ pipe_in:
         beqz    s0, execve              # 先頭プロセスならスキップ
                                         # 標準入力をパイプに
         ld      a0, 8(t2)               # 前のパイプの読出し fd
-        mv      a1, zero                # new_fd 標準入力
-        mv      a2, zero                # flag = 0
+        li      a1, 0                   # new_fd 標準入力
+        li      a2, 0                   # flag = 0
         li      a7, sys_dup3            # dup2 システムコール
         ecall
         jal     CheckError
@@ -3607,7 +3607,7 @@ CheckParseArg:
         jal     OutAsciiZ
         jal     NewLine
     0:
-        mv      a1, zero                # 配列インデックス
+        li      a1, 0                   # 配列インデックス
         la      a2, exarg               # 配列先頭
     1:
         slli    t0, a1, 3
@@ -3650,9 +3650,9 @@ ParseArg:
         sd      t2, 16(sp)
         sd      a0,  8(sp)
         sd      ra, (sp)
-        mv      a2, zero                # 配列インデックス
-        mv      a3, zero                # パイプのカウンタ
-        mv      a1, zero                # リダイレクトフラグ
+        li      a2, 0                   # 配列インデックス
+        li      a3, 0                   # パイプのカウンタ
+        li      a1, 0                   # リダイレクトフラグ
         la      t2, FileName            # コマンド文字列のバッファ
         la      t1, exarg               # ポインタの配列先頭
     1:
@@ -4018,7 +4018,7 @@ func_mo:
         ld      a3, (a3)
         li      a3, MS_RDONLY           # ReadOnly FileSystem
     1:
-        mv      a4, zero                # void * data
+        li      a4, 0                   # void * data
         li      a7, sys_mount           # system call
         ecall
         jal     CheckError
@@ -4083,7 +4083,7 @@ func_rm:
         jal     FuncBegin               # char ** argp
         ld      a1, (a1)
         li      a0, AT_FDCWD
-        mv      a2, zero
+        li      a2, 0
         li      a7, sys_unlinkat        # system call
         ecall
         jal     CheckError
@@ -4127,7 +4127,7 @@ func_so:
         la      a0, msg_f_so            # |so dev_name
         jal     FuncBegin
         ld      a0, (a1)                # const char * specialfile
-        mv      a1, zero                # int swap_flags
+        li      a1, 0                   # int swap_flags
         li      a7, sys_swapon          # system call
         ecall
         jal     CheckError
@@ -4249,7 +4249,7 @@ URL_Decode:
         mv      a3, a0                  # top of input buffer
         add     s4, a3, a1
         addi    s4, s4, -1              # end of input encoded string
-        mv      s0, zero
+        li      s0, 0
     1:
         lbu     s1, (a3)                # get 1 byte
         add     a3, a3, 1
@@ -4265,7 +4265,7 @@ URL_Decode:
         sb      s1, (t0)                # output character as it is
         j       4f                      # next input char
 
-    3:  mv      s1, zero                # % decode
+    3:  li      s1, 0                   # % decode
         lbu     s2, (a3)                # a character next to %
         add     a3, a3, 1
         jal     IsHexNum                # return value or -1 in a0

@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------
 # Standard I/O Subroutine for RISC-V
-#   2024/09/13 risc-v 64 system call
+#   2024/12/13 risc-v 64 system call
 # Copyright (C) 2024  Jun Mizutani <mizutani.jun@nifty.ne.jp>
 # stdio.s may be copied under the terms of the GNU General Public License.
 # ------------------------------------------------------------------------
@@ -24,7 +24,7 @@ Exit:
         addi    sp, sp, -16
         sd      a7,  8(sp)
         sd      ra,  0(sp)
-        mv      a0, zero
+        li      a0, 0
         li      a7, sys_exit
         ecall
         ld      a7,  8(sp)          # will not execute
@@ -76,7 +76,7 @@ StrLen:
         addi    sp, sp, -16
         sd      a0,  8(sp)
         sd      a2,  0(sp)
-        mv      a1, zero                # a1 : counter
+        li      a1, 0                   # a1 : counter
 1:      lbu     a2, 0(a0)
         addi    a1, a1, 1               # counter++
         addi    a0, a0, 1               # address
@@ -407,8 +407,8 @@ PrintLeft:
         sd      ra,  0(sp)
         mv      fp, sp
         addi    sp, sp, -32             # allocate buffer
-        mv      a2, zero                # counter
-        mv      a3, zero                # positive flag
+        li      a2, 0                   # counter
+        li      a3, 0                   # positive flag
         bge     a0, zero, 1f
         li      a3, 1                   # set negative
         sub     a0, a2, a0              # a0 = 0-a0
@@ -480,8 +480,8 @@ PrintRightU:
         addi    sp, sp, -32             # allocate buffer
         li      a4, ' '
     0:  mv      a5, a1
-        mv      a2, zero                # counter
-        mv      a3, zero                # positive flag
+        li      a2, 0                   # counter
+        li      a3, 0                   # positive flag
         j       1f                      # PrintRight.1
 
 #------------------------------------
@@ -504,8 +504,8 @@ PrintRight:
         addi    sp, sp, -32             # allocate buffer
         li      a4, ' '
         mv      a5, a1
-        mv      a2, zero                # counter=0
-        mv      a3, zero                # positive flag
+        li      a2, 0                   # counter=0
+        li      a3, 0                   # positive flag
         bge     a0, zero, 1f
         li      a3, 1                   # set negative
         sub     a0, zero, a0            # a0 = 0-a0
@@ -554,7 +554,7 @@ PrintRight:
 # input 1 character from stdin
 # a0 : get char
 InChar:
-        mv      a0, zero                # clear upper bits
+        li      a0, 0                   # clear upper bits
         addi    sp, sp, -48
         sd      a7, 32(sp)
         sd      a2, 24(sp)
@@ -589,7 +589,7 @@ InputLine0:
         sd      ra,  0(sp)
         mv      a4, a0                  # BufferSize
         mv      a5, a1                  # Input Buffer
-        mv      a3, zero                # counter
+        li      a3, 0                   # counter
     1:
         jal     InChar
         li      t0, 0x08                # BS ?
