@@ -1,8 +1,8 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2024/12/13
-#  Copyright (C) 2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
+#  2025/01/01
+#  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
 # as -o rvtl64.o rvtl64.s
@@ -4412,7 +4412,7 @@ mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
                 .align  2
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2024/12/13,(C)2024 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025/01/01,(C)2025 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
                 .align  2
@@ -4496,9 +4496,9 @@ Error_msg:      .asciz   "\nError!\n"
                 .align  2
     msg_f_pv:   .asciz  "Pivot Root\n"
                 .align  2
-    msg_f_rd:   .asciz  "Remv e Directory\n"
+    msg_f_rd:   .asciz  "Remove Directory\n"
                 .align  2
-    msg_f_rm:   .asciz  "Remv e File\n"
+    msg_f_rm:   .asciz  "Remove File\n"
                 .align  2
     msg_f_rt:   .asciz  "Reset Termial\n"
                 .align  2
