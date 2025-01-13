@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2025/01/01
+#  2025/01/13
 #  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -218,14 +218,14 @@ MainLoop:
         # SIGINTを受信(ctrl-Cの押下)を検出したら初期状態に戻す
         lbu     a2, -5(gp)
         beqz    a2, 1f                  # SIGINT 受信?
-        jal     WarmInit                # 実行停止
+    0:  jal     WarmInit                # 実行停止
         j       3f
 
     1:  lbu     a2, -6(gp)              # 0除算エラー?
         beqz    a2, 2f
         la      a0, err_div0            # 0除算メッセージ
         jal     OutAsciiZ
-        jal     WarmInit                # 実行停止
+        j       0b
 
         # 式中でエラーを検出したらメッセージを表示して停止
     2:  lbu     a2, -7(gp)              # 式中にエラー?
@@ -310,15 +310,14 @@ ReadLine:
 # t1 : 行先頭アドレス
 #-------------------------------------------------------------------------
 ReadMem:
-        lw      a0, (t1)                # JUMP先かもしれない
-        addi    a0, a0, 1               # 次行オフセットが -1 か?
-        beq     a0, zero, 1f            # コード末なら実行終了
-        lw      a0, (t1)
+        lw      a0, (t1)                # 次行へのオフセット
+        ble     a0, zero, 1f            # コード末なら実行終了
         add     t1, t1, a0              # Next Line
-
-        # 次行へのオフセットが0ならばコード末
-        lw      a0, (t1)                # 次行オフセット
-        bgt     a0, zero, 2f            # コード末？
+        # 現在の行番号を # に設定し、コード部分先頭アドレスを t2 に設定
+        jal     SetLineNo               # 行番号を # に設定
+        addi    t2, t1, 8               # 行のコード先頭
+        li      s1, 0                   # EOL=no
+        j       MainLoop
 
         # コード末ならばコンソール入力(ダイレクトモード)に設定し、
         # EOLを1とすることで、次行取得を促す
@@ -326,12 +325,6 @@ ReadMem:
         li      a0, 0
         li      s1, 1                   # EOL=yes
         sb      a0, -3(gp)              # ExecMode=Direct
-        j       MainLoop
-
-    2:  # 現在の行番号を # に設定し、コード部分先頭アドレスを t2 に設定
-        jal     SetLineNo               # 行番号を # に設定
-        addi    t2, t1, 8               # 行のコード先頭
-        li      s1, 0                   # EOL=no
         j       MainLoop
 
 #-------------------------------------------------------------------------
@@ -4412,7 +4405,7 @@ mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
                 .align  2
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025/01/01,(C)2025 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025/01/13,(C)2025 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
                 .align  2
