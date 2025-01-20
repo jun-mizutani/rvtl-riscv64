@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : vtllib.s
-#  2024/12/13
+#  2025-01-21
 #  Copyright (C) 2003-2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  vtllib.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -105,9 +105,10 @@ MS_NOEXEC       =  8        #  Disallow program execution
 MS_SYNCHRONOUS  = 16        #  Writes are synced at once
 MS_REMOUNT      = 32        #  Alter flags of a mounted FS
 
-AT_FDCWD =  -100
-
-size_dir_ent = 512
+AT_FDCWD        = -100
+AT_REMOVEDIR    = 0x200
+AT_EMPTY_PATH   = 0x1000
+size_dir_ent    = 512
 
 # -------------------------------------------------------------------------
 #  編集付き行入力(初期文字列付き)

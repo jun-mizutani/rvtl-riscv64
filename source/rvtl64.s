@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2025/01/13
+#  2025-01-21
 #  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -1917,7 +1917,7 @@ IsHexNum:
         ret
 
 #-------------------------------------------------------------------------
-# コンソールから 1 文字入力, EBXに返す
+# コンソールから 1 文字入力, a1 に返す
 #-------------------------------------------------------------------------
 CharInput:
         jal     InChar
@@ -3821,14 +3821,20 @@ func_cd:
 func_cm:
         la      a0, msg_f_cm            # |cm 644 file
         jal     FuncBegin
-        ld      a0, 8(a1)               # file name
-        ld      a1, (a1)                # permission
+        mv      a2, a1
+        ld      a0, 8(a2)               # file name
+        jal     fropen                  # open
+        jal     CheckError
+        bltz    a0, 1f
+        mv      a3, a0                  # save fd
+        ld      a1, (a2)                # permission
         jal     Oct2Bin
-        mv      a1, a0
-        li      a7, sys_chmod           # system call
+        mv      a1, a0                  # permission
+        mv      a0, a3                  # fd
+        li      a7, sys_fchmod          # system call
         ecall
         jal     CheckError
-        j       func_return2
+    1:  j       func_return2
 func_cr:
         la      a0, msg_f_cr            # |cr path
         jal     FuncBegin
@@ -3985,14 +3991,16 @@ def_func_m:
 func_md:
         la      a0, msg_f_md            # |md dir (777)
         jal     FuncBegin
-        ld      a0, 4(a1)               # permission
-        ld      a1, (a1)                # directory name
+        mv      a3, a1
+        ld      a0, 8(a3)               # permission
         bnez    a0, 1f
-        ld      a0, c755
+        ld      a2, c755
         j       2f
     1:  jal     Oct2Bin
-    2:  mv      a1, a0
-        li      a7, sys_mkdir           # system call
+        mv      a2, a0
+    2:  li      a0, AT_FDCWD            # dfd
+        ld      a1, (a3)                # directory name
+        li      a7, sys_mkdirat         # system call
         ecall
         jal     CheckError
         j       func_return2
@@ -4019,9 +4027,11 @@ func_mo:
 func_mv:
         la      a0, msg_f_mv            # |mv fileold filenew
         jal     FuncBegin
-        ld      a0, (a1)
-        ld      a1, 8(a1)
-        li      a7, sys_rename          # system call
+        ld      a3, 8(a1)               # new filename
+        li      a2, AT_FDCWD
+        mv      a0, a2
+        ld      a1, (a1)                # old filename
+        li      a7, sys_renameat        # system call
         ecall
         jal     CheckError
         j       func_return2
@@ -4065,8 +4075,10 @@ def_func_r:
 func_rd:
         la      a0, msg_f_rd            # |rd path
         jal     FuncBegin               # char ** argp
-        ld      a0, (a1)
-        li      a7, sys_rmdir           # system call
+        li      a0, AT_FDCWD
+        li      a2, AT_REMOVEDIR
+        ld      a1, (a1)                # path
+        li      a7, sys_unlinkat        # system call
         ecall
         jal     CheckError
         j       func_return2
@@ -4081,8 +4093,6 @@ func_rm:
         ecall
         jal     CheckError
         j       func_return2
-
-AT_FDCWD =  -100
 
 func_rt:                                # reset terminal
         la      a0, msg_f_rt            # |rt
@@ -4150,7 +4160,8 @@ func_um:
         la      a0, msg_f_um            # |um dev_name
         jal     FuncBegin               #
         ld      a0, (a1)                # dev_name
-        li      a7, sys_umount          # sys_oldumount システムコール
+        li      a1, 0                   # flag
+        li      a7, sys_umount2         # sys_umount2
         ecall
         jal     CheckError
         j       func_return2
@@ -4405,7 +4416,7 @@ mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
                 .align  2
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025/01/13,(C)2025 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025-01-21,(C)2025 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
                 .align  2
