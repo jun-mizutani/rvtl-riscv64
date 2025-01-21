@@ -3827,7 +3827,7 @@ func_cm:
         jal     CheckError
         bltz    a0, 1f
         mv      a3, a0                  # save fd
-        ld      a1, (a2)                # permission
+        ld      a0, (a2)                # permission
         jal     Oct2Bin
         mv      a1, a0                  # permission
         mv      a0, a3                  # fd
@@ -4027,11 +4027,12 @@ func_mo:
 func_mv:
         la      a0, msg_f_mv            # |mv fileold filenew
         jal     FuncBegin
+        li      a4, 0                   # flag
         ld      a3, 8(a1)               # new filename
         li      a2, AT_FDCWD
         mv      a0, a2
         ld      a1, (a1)                # old filename
-        li      a7, sys_renameat        # system call
+        li      a7, sys_renameat2       # system call
         ecall
         jal     CheckError
         j       func_return2
@@ -4335,7 +4336,7 @@ FuncBegin:
 
 #-------------------------------------------------------------------------
 # 8進数文字列を数値に変換
-# a0 からの8進数文字列を数値に変換して a1 に返す
+# a0 からの8進数文字列を数値に変換して a0 に返す
 #-------------------------------------------------------------------------
 Oct2Bin:
         addi    sp, sp, -16
@@ -4347,19 +4348,19 @@ Oct2Bin:
     1:
         jal     GetOctal
         bltz    a1, 2f                 # exit
-        slli    s0, a1, 3
-        add     a2, a2, s0
+        slli    a2, a2, 3
+        add     a2, a2, a1
         j       1b
     2:
-        mv      a1, a2
+        mv      a0, a2
         ld      a2,  8(sp)
         ld      ra, (sp)
         addi    sp, sp, 16
         ret
 
 #-------------------------------------------------------------------------
-# a2 の示す8進数文字を数値に変換して a1 に返す
-# 8進数文字でないかどうかは bhiで判定可能
+# a0 の示す8進数文字を数値に変換して a1 に返す
+# a0 は次の文字に更新される
 #-------------------------------------------------------------------------
 GetOctal:
         lbu     a1, (a0)
