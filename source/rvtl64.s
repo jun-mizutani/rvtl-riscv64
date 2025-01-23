@@ -4195,7 +4195,7 @@ func_ve:
         addi    s0, gp, '%' * 8
         sd      a3, (s0)                # バージョン設定
         li      a3, VERSION64
-        sd      a3, 4(a1)               # 64bit
+        sw      a3, 4(s0)               # 64bit
         j       func_return2
 func_vc:
         li      a3, CPU
