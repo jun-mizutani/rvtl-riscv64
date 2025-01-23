@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : vtllib.s
-#  2025-01-21
+#  2025-01-23
 #  Copyright (C) 2003-2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  vtllib.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -769,47 +769,46 @@ setup_cursor:
 #  Translate Function Key into ctrl-sequence
 translate_key_seq:
         addi    sp, sp, -16
-        sd      a0,  8(sp)
         sd      ra,  0(sp)
         jal     InChar
         li      s0, '['
         beq     a0, s0, 1f
         li      a0, 0
-        j       7f                      # return
+        j       8f                      # return
 
     1:  jal     InChar
         li      s0, 'A'
         bne     a0, s0, 2f
         li      a0, 'P' - 0x40          # ^P
-        j       7f                      # return
+        j       8f                      # return
 
     2:  li      s0, 'B'
         bne     a0, s0, 3f
         li      a0, 'N' - 0x40          # ^N
-        j       7f                      # return
+        j       8f                      # return
 
     3:  li      s0, 'C'
         bne     a0, s0, 4f
         li      a0, 'F' - 0x40          # ^F
-        j       7f                      # return
+        j       8f                      # return
 
     4:  li      s0, 'D'
         bne     a0, s0, 5f
         li      a0, 'B' - 0x40          # ^B
-        j       7f                      # return
+        j       8f                      # return
 
-    5:  li      s0, '3'                 # ^((3~ (Del)
-        bne     a0, s0, 6f
-        li      s0, '4'                 # ^((4~ (End)
-        j       7f                      # return
+    5:  li      s0, '3'                 # ^[[3~ (Del)
+        beq     a0, s0, 6f
+        li      s0, '4'                 # ^[[4~ (End)
+        bne     a0, s0, 8f
 
     6:  jal     InChar
         li      s0, '~'
         bne     a0, s0, 7f
         li      a0, 4                   # ^D
-
-    7:
-        ld      a0,  8(sp)
+        j       8f
+    7:  li      a0, 0
+    8:
         ld      ra,  0(sp)
         addi    sp, sp, 16
         ret
