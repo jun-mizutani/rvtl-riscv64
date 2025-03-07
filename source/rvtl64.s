@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2025-01-23
+#  2025-03-07
 #  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -4416,105 +4416,59 @@ n672274774:     .quad   672274774
 mem_init:       .quad   MEMINIT
 
 .ifndef SMALL_VTL
-                .align  2
 start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025-01-23,(C)2025 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
-                .align  2
 .endif
 
-                .align  2
 initvtl:        .asciz   "/etc/init.vtl"
-                .align  2
 cginame:        .asciz   "wltvr"
-                .align  2
 err_div0:       .asciz   "\nDivided by 0!\n"
-                .align  2
 err_doublequote:.asciz   "\nDoublequote in Exp!\n"
-                .align  2
 err_unknown:    .asciz   "\nUnknown Error!\n"
-                .align  2
 err_label:      .asciz   "\nLabel not found!\n"
-                .align  2
 err_vstack:     .asciz   "\nEmpty stack!\n"
-                .align  2
 err_space:      .asciz   "\nSpace in Expression at line "
-                .align  2
 err_exp:        .asciz   "\nError in Expression at line "
-                .align  2
 envstr:         .asciz   "PATH=/bin:/usr/bin"
-                .align  2
 prompt1:        .asciz   "\n<"
-                .align  2
 prompt2:        .asciz   "> "
-                .align  2
 syntaxerr:      .asciz   "\nSyntax error! at line "
-                .align  2
 stkunder:       .asciz   "\nStack Underflow!\n"
-                .align  2
 stkover:        .asciz   "\nStack Overflow!\n"
-                .align  2
 vstkunder:      .asciz   "\nVariable Stack Underflow!\n"
-                .align  2
 vstkover:       .asciz   "\nVariable Stack Overflow!\n"
-                .align  2
 Range_msg:      .asciz   "\nOut of range!\n"
-                .align  2
 no_direct_mode: .asciz   "\nDirect mode is not allowed!\n"
-                .align  2
 
 err_str:        .asciz  "^  ["
-                .align  2
 equal_err:      .asciz  "\n= required."
-                .align  2
 EndMark_msg:    .asciz  "\n&=0 required.\n"
-                .align  2
 error_cdread:   .asciz   "\nCode Read (>=) is not allowed!\n"
-                .align  2
 Error_msg:      .asciz   "\nError!\n"
-                .align  2
 
 .ifndef SMALL_VTL
 #-------------------------------------------------------------------------
 # 組み込み関数用メッセージ
 #-------------------------------------------------------------------------
-                .align  2
     msg_f_ca:   .asciz  ""
-                .align  2
     msg_f_cd:   .asciz  "Change Directory to "
-                .align  2
     msg_f_cm:   .asciz  "Change Permission \n"
-                .align  2
     msg_f_cr:   .asciz  "Change Root to "
-                .align  2
     msg_f_cw:   .asciz  "Current Working Directory : "
-                .align  2
     msg_f_ex:   .asciz  "Exec Command\n"
-                .align  3
     msg_f_ls:   .asciz  "List Directory\n"
-                .align  2
     msg_f_md:   .asciz  "Make Directory\n"
-                .align  2
     msg_f_mv:   .asciz  "Change Name\n"
-                .align  2
     msg_f_mo:   .asciz  "Mount\n"
-                .align  2
     msg_f_pv:   .asciz  "Pivot Root\n"
-                .align  2
     msg_f_rd:   .asciz  "Remove Directory\n"
-                .align  2
     msg_f_rm:   .asciz  "Remove File\n"
-                .align  2
     msg_f_rt:   .asciz  "Reset Termial\n"
-                .align  2
     msg_f_sf:   .asciz  "Swap Off\n"
-                .align  2
     msg_f_so:   .asciz  "Swap On\n"
-                .align  2
     msg_f_sy:   .asciz  "Sync\n"
-                .align  2
     msg_f_um:   .asciz  "Unmount\n"
-                .align  2
 .endif
 
 #==============================================================

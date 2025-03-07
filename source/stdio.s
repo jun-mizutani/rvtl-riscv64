@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------
 # Standard I/O Subroutine for RISC-V
-#   2024/12/13 risc-v 64 system call
-# Copyright (C) 2024  Jun Mizutani <mizutani.jun@nifty.ne.jp>
+#   2025/03/07 risc-v 64 system call
+# Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 # stdio.s may be copied under the terms of the GNU General Public License.
 # ------------------------------------------------------------------------
 
@@ -16,7 +16,8 @@ __STDIO = 1
 
 .text
 .option norelax
-.align 2  # 4byte boundary
+.option rvc
+.align 2
 
 #------------------------------------
 # exit with 0

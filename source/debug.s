@@ -1,8 +1,8 @@
 # -------------------------------------------------------------------------
 #   Debugging Macros for RISC-V assembly
 #   file : debug.s
-#   2024/09/01
-#   Copyright (C) 2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
+#   2025/03/07
+#   Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #   This file may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
 
@@ -68,7 +68,7 @@ __DEBUG = 1
         LEAVE
         jal     zero, 999f
 998:    .asciz "\reg"
-        .align 3
+        .align 2
 999:
 .endm
 

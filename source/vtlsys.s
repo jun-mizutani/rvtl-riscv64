@@ -1,11 +1,11 @@
 #-------------------------------------------------------------------------
 #  file : vtlsys.s for risc-v
-#  2024-11-08
-#  Copyright (C) 2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
+#  2025-03-07
+#  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #-------------------------------------------------------------------------
 
         .text
-        .align  3
+        .align  2
         .option norelax
 
 SYSCALLMAX  =   1079

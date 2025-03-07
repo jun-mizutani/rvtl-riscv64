@@ -1,9 +1,9 @@
 ★  Return of Very Tiny Language (64bit) for RISC-V ver.4.00
 
--  2024/11/09  Jun Mizutani
+-  2025/03/07  Jun Mizutani
 
 rvtl64 は Tiny Basic系のプログラミング環境です。アセンブラで作成している
-ため、10-30キロバイトほどの非常に小さいプログラムですが、対話的に操作
+ため、13-24キロバイトほどの非常に小さいプログラムですが、対話的に操作
 できる (REPL:read-eval-print loop) 豊富な機能を持っています。
 
 rvtl は特殊な文法 (基本的にすべて代入文) を持つ CASUAL や VTL の子孫と

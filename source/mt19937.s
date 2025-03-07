@@ -1,9 +1,9 @@
 #---------------------------------------------------------------------
 #   Mersenne Twister
 #   file : mt19937.s
-#     Rewritten in RISC-V Assembly by Jun Mizutani 2024/12/13.
+#     Rewritten in RISC-V Assembly by Jun Mizutani 2025/03/07.
 #     From original code in C by Takuji Nishimura(mt19937int.c).
-#     SISC-V version Copyright (C) 2024 Jun Mizutani.
+#     SISC-V version Copyright (C) 2024-2025 Jun Mizutani.
 #---------------------------------------------------------------------
 
 # A C-program for MT19937: Integer version (1999/10/28)
@@ -42,7 +42,8 @@
 # Vol. 8, No. 1, January 1998, pp 3--30.
 
 .text
-        .align  3
+        .align  2
+        .option rvc
         .option norelax
 #---------------------------------------------------------------------
 # Initialize Mersenne Twister
