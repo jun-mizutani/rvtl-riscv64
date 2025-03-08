@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2025-03-07
+#  2025-03-08
 #  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -519,46 +519,6 @@ jumpToCommand:
         li      s0, 8
         beq     tp, s0, MainLoop
         j       SyntaxError
-
-#-------------------------------------------------------------------------
-# コマンド用ジャンプテーブル
-#-------------------------------------------------------------------------
-TblComm1:
-        .quad Com_GOSUB    #   21  !  GOSUB
-        .quad Com_String   #   22  "  文字列出力
-        .quad Com_GO       #   23  #  GOTO 実行中の行番号を保持
-        .quad Com_OutChar  #   24  $  文字コード出力
-        .quad Com_Error    #   25  %  直前の除算の剰余または usec を保持
-        .quad Com_NEW      #   26  &  NEW, VTLコードの最終使用アドレスを保持
-        .quad Com_Error    #   27  '  文字定数
-        .quad Com_FileWrite#   28  (  File 書き出し
-        .quad Com_FileRead #   29  )  File 読み込み, 読み込みサイズ保持
-        .quad Com_BRK      #   2A  *  メモリ最終(brk)を設定, 保持
-        .quad Com_VarPush  #   2B  +  ローカル変数PUSH, 加算演算子, 絶対値
-        .quad Com_Exec     #   2C  ,  fork & exec
-        .quad Com_VarPop   #   2D  -  ローカル変数POP, 減算演算子, 負の十進数
-        .quad Com_Space    #   2E  .  空白出力
-        .quad Com_NewLine  #   2F  /  改行出力, 除算演算子
-TblComm2:
-        .quad Com_Comment  #   3A  :  行末まで注釈
-        .quad Com_IF       #   3B  ;  IF
-        .quad Com_CdWrite  #   3C  <  rvtlコードのファイル出力
-        .quad Com_Top      #   3D  =  コード先頭アドレス
-        .quad Com_CdRead   #   3E  >  rvtlコードのファイル入力
-        .quad Com_OutNum   #   3F  ?  数値出力  数値入力
-        .quad Com_DO       #   40  @  DO UNTIL NEXT
-TblComm3:
-        .quad Com_RCheck   #   5B  [  Array index 範囲チェック
-        .quad Com_Ext      #   5C  \  拡張用  除算演算子(unsigned)
-        .quad Com_Return   #   5D  )  RETURN
-        .quad Com_Comment  #   5E  ^  ラベル宣言, 排他OR演算子, ラベル参照
-        .quad Com_USleep   #   5F  _  usleep, gettimeofday
-        .quad Com_RANDOM   #   60  `  擬似乱数を保持 (乱数シード設定)
-TblComm4:
-        .quad Com_FileTop  #   7B  {  ファイル先頭(ヒープ領域)
-        .quad Com_Function #   7C  |  組み込みコマンド, エラーコード保持
-        .quad Com_FileEnd  #   7D  }  ファイル末(ヒープ領域)
-        .quad Com_Exit     #   7E  ~  VTL終了
 
 #-------------------------------------------------------------------------
 # ソースコードを1文字読み込む
@@ -4415,8 +4375,48 @@ DispFile:
 n672274774:     .quad   672274774
 mem_init:       .quad   MEMINIT
 
+#-------------------------------------------------------------------------
+# コマンド用ジャンプテーブル
+#-------------------------------------------------------------------------
+TblComm1:
+        .quad Com_GOSUB    #   21  !  GOSUB
+        .quad Com_String   #   22  "  文字列出力
+        .quad Com_GO       #   23  #  GOTO 実行中の行番号を保持
+        .quad Com_OutChar  #   24  $  文字コード出力
+        .quad Com_Error    #   25  %  直前の除算の剰余または usec を保持
+        .quad Com_NEW      #   26  &  NEW, VTLコードの最終使用アドレスを保持
+        .quad Com_Error    #   27  '  文字定数
+        .quad Com_FileWrite#   28  (  File 書き出し
+        .quad Com_FileRead #   29  )  File 読み込み, 読み込みサイズ保持
+        .quad Com_BRK      #   2A  *  メモリ最終(brk)を設定, 保持
+        .quad Com_VarPush  #   2B  +  ローカル変数PUSH, 加算演算子, 絶対値
+        .quad Com_Exec     #   2C  ,  fork & exec
+        .quad Com_VarPop   #   2D  -  ローカル変数POP, 減算演算子, 負の十進数
+        .quad Com_Space    #   2E  .  空白出力
+        .quad Com_NewLine  #   2F  /  改行出力, 除算演算子
+TblComm2:
+        .quad Com_Comment  #   3A  :  行末まで注釈
+        .quad Com_IF       #   3B  ;  IF
+        .quad Com_CdWrite  #   3C  <  rvtlコードのファイル出力
+        .quad Com_Top      #   3D  =  コード先頭アドレス
+        .quad Com_CdRead   #   3E  >  rvtlコードのファイル入力
+        .quad Com_OutNum   #   3F  ?  数値出力  数値入力
+        .quad Com_DO       #   40  @  DO UNTIL NEXT
+TblComm3:
+        .quad Com_RCheck   #   5B  [  Array index 範囲チェック
+        .quad Com_Ext      #   5C  \  拡張用  除算演算子(unsigned)
+        .quad Com_Return   #   5D  )  RETURN
+        .quad Com_Comment  #   5E  ^  ラベル宣言, 排他OR演算子, ラベル参照
+        .quad Com_USleep   #   5F  _  usleep, gettimeofday
+        .quad Com_RANDOM   #   60  `  擬似乱数を保持 (乱数シード設定)
+TblComm4:
+        .quad Com_FileTop  #   7B  {  ファイル先頭(ヒープ領域)
+        .quad Com_Function #   7C  |  組み込みコマンド, エラーコード保持
+        .quad Com_FileEnd  #   7D  }  ファイル末(ヒープ領域)
+        .quad Com_Exit     #   7E  ~  VTL終了
+
 .ifndef SMALL_VTL
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025-01-23,(C)2025 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025-03-08,(C)2025 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
 .endif

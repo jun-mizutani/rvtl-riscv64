@@ -1,8 +1,8 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : vtllib.s
-#  2025-01-23
-#  Copyright (C) 2003-2024 Jun Mizutani <mizutani.jun@nifty.ne.jp>
+#  2025-03-08
+#  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  vtllib.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
 
@@ -1311,8 +1311,6 @@ SET_TERMIOS:
         addi    sp, sp, 32
         ret
 
-termios_mode:   .long   ~ICANON & ~ECHO & ~ECHONL
-
 # --------------------------------------------------------------
 #  現在の termios を Cooked モードに設定
 #  Cookedモード, ECHO あり, ECHONL あり
@@ -1345,7 +1343,6 @@ SET_TERMIOS2:
         ld      ra,  0(sp)
         addi    sp, sp, 32
         ret
-termios_mode2:   .long   ICANON | ECHO | ECHONL
 
 # --------------------------------------------------------------
 #  保存されていた termios を復帰
@@ -1514,6 +1511,9 @@ fclose:
 # ==============================================================
 .data
                     .align  2
+termios_mode:       .long   ~ICANON & ~ECHO & ~ECHONL
+termios_mode2:      .long   ICANON | ECHO | ECHONL
+
 CURSOR_REPORT:      .byte   4, 0x1B
                     .ascii  "[6n"          #  ^[[6n
                     .align  2
