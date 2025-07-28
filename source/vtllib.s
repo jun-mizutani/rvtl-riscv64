@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : vtllib.s
-#  2025-03-08
+#  2025-07-28
 #  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  vtllib.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -209,21 +209,20 @@ RL_in_printable:
         j       RL_next_char
 RL_insert:
         li      s0, 0x80
-        bgeu    a0, s0, 0f
+        bgeu    a0, s0, 0f              # if (a0 < 0x7F) then OutChar
         jal     OutChar
     0:  addi    s0, s9, -1              # p = eol-1
-    1:  bgtu    s10, s0, 2f             # while(p=>cp){buf(p)=buf(p-1); p--}
-                                        #   if(s10>ip) goto2
-        add     a1, s6, s0              #   a1=s6 + s9 - 1
-        lbu     a2, -1(a1)
-        sb      a2, (a1)
-        addi    s0, s0, -1              #  s0--
+    1:  bgtu    s10, s0, 2f             # while(p=>s10)
+        add     a1, s6, s0              #   a1 = @buf[p]
+        lbu     a2, -1(a1)              #   a2 = buf[p-1]
+        sb      a2, (a1)                #   buf[p] = a2
+        addi    s0, s0, -1              #   p--
         j       1b
     2:
         add     s0, s6, s10
         sb      a0, -1(s0)              # s10 was already incremented
         li      s0, 0x80
-        bgeu    a0, s0, 3f
+        bgeu    a0, s0, 3f              # if (a0>=0x8F) then print_line
         jal     print_line_after_cp
         j       RL_next_char
     3:
