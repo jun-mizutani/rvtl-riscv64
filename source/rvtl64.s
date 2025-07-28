@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------
 #  Return of the Very Tiny Language for RISC-V
 #  file : rvtl64.s
-#  2025-03-08
+#  2025-07-28
 #  Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 #  rvtl.s may be copied under the terms of the GNU General Public License.
 # -------------------------------------------------------------------------
@@ -40,7 +40,7 @@ CPU         =   6
 
 .include "vtllib.s"
 .include "vtlsys.s"
-.include "mt19937.s"
+.include "mt19937ar.s"
 
 #==============================================================
         .text
@@ -4416,7 +4416,7 @@ TblComm4:
         .quad Com_Exit     #   7E  ~  VTL終了
 
 .ifndef SMALL_VTL
-start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025-03-08,(C)2025 Jun Mizutani\n"
+start_msg:      .ascii   "RVTL64 RISC-V v.4.00 2025-07-28,(C)2025 Jun Mizutani\n"
                 .ascii   "RVTL may be copied under the terms of the GNU "
                 .asciz   "General Public License.\n"
 .endif

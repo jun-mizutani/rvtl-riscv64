@@ -1,98 +1,105 @@
 #---------------------------------------------------------------------
 #   Mersenne Twister
-#   file : mt19937.s
-#     Rewritten in RISC-V Assembly by Jun Mizutani 2025/03/07.
-#     From original code in C by Takuji Nishimura(mt19937int.c).
-#     SISC-V version Copyright (C) 2024-2025 Jun Mizutani.
+#   file : mt19937ar.s
+#     Rewritten in RISC-V Assembly by Jun Mizutani 2025/07/28.
+#     From original code in C by Takuji Nishimura(mt19937ar.c).
+#     SISC-V version Copyright (C) 2025 Jun Mizutani.
 #---------------------------------------------------------------------
-
-# A C-program for MT19937: Integer version (1999/10/28)
-#  genrand() generates one pseudorandom unsigned integer (32bit)
-# which is uniformly distributed among 0 to 2^32-1  for each
-# call. sgenrand(seed) sets initial values to the working area
-# of 624 words. Before genrand(), sgenrand(seed) must be
-# called once. (seed is any 32-bit integer.)
-#   Coded by Takuji Nishimura, considering the suggestions by
-# Topher Cooper and Marc Rieffel in July-Aug. 1997.
+# A C-program for MT19937, with initialization improved 2002/1/26.
+# Coded by Takuji Nishimura and Makoto Matsumoto.
 #
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Library General Public
-# License as published by the Free Software Foundation; either
-# version 2 of the License, or (at your option) any later
-# version.
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU Library General Public License for more details.
-# You should have received a copy of the GNU Library General
-# Public License along with this library; if not, write to the
-# Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
+#  Before using, initialize the state by using init_genrand(seed)  
+# or init_by_array(init_key, key_length).
 #
-# Copyright (C) 1997, 1999 Makoto Matsumoto and Takuji Nishimura.
-# Any feedback is very welcome. For any question, comments,
-# see http://www.math.keio.ac.jp/matumoto/emt.html or email
-# matumoto//math.keio.ac.jp
+#  Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+# All rights reserved.
 #
-# REFERENCE
-# M. Matsumoto and T. Nishimura,
-# "Mersenne Twister: A 623-Dimensionally Equidistributed Uniform
-# Pseudo-Random Number Generator",
-# ACM Transactions on Modeling and Computer Simulation,
-# Vol. 8, No. 1, January 1998, pp 3--30.
+#  Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#    1. Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    2. Redistributions in binary form must reproduce the above copyright
+#      notice, this list of conditions and the following disclaimer in the
+#      documentation and/or other materials provided with the distribution.
+#
+#    3. The names of its contributors may not be used to endorse or promote 
+#      products derived from this software without specific prior written 
+#      permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#   Any feedback is very welcome.
+# http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
+# email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 
 .text
         .align  2
-        .option rvc
         .option norelax
+        .option rvc
 #---------------------------------------------------------------------
 # Initialize Mersenne Twister
 #   enter a0 : 32bit seed
 #---------------------------------------------------------------------
 sgenrand:
         addi    sp, sp, -80
-        sd      s7, 72(sp)
-        sd      s6, 64(sp)
-        sd      s5, 56(sp)
-        sd      s4, 48(sp)
-        sd      s3, 40(sp)
-        sd      s2, 32(sp)
-        sd      a2, 24(sp)
-        sd      a1, 16(sp)
-        sd      a0,  8(sp)
+        sd      s3, 72(sp)
+        sd      s2, 64(sp)
+        sd      s1, 56(sp)
+        sd      s0, 48(sp)
+        sd      a5, 40(sp)
+        sd      a4, 32(sp)
+        sd      a3, 24(sp)
+        sd      a2, 16(sp)
+        sd      a1,  8(sp)
         sd      ra,  0(sp)
-        la      s3, mt
-        la      s7, N
-        lw      s4, (s7)                # N
-        lwu     s5, 12(s7)              # nffff0000
-        lw      s6, 8(s7)               # n69069
-        li      a2, 0                   # I=0
+        la      a3, mt
+        la      s3, N
+        lw      a4, (s3)                # N
+        lwu     a5, 12(s3)              # nffffffff
+        lwu     s2, 8(s3)               # 1812433253(6C078965)
+        and     a1, a0, a5              # a1 = seed & 0xffffffff
+        sw      a1, (a3)                # mt[0] = a1
+        li      a2, 1                   # i = 1
     1:
-        and     a1, a0, s5              # A = seed & 0xffff0000
-        mul     a0, s6, a0              # a0 = seed * 69069
-        addi    a0, a0, 1               # S = R * S + 1
-        and     s2, a0, s5              # S & 0xffff0000
-        srli    s2, s2, 16              # (S & 0xffff0000 >> 16)
-        or      a1, a1, s2              # A=A|(S & 0xffff0000 >> 16)
+        addi    s0, a2, -1              # i-1
+        slli    s0, s0, 2               # s0 = (i-1) * 4
+        add     s0, a3, s0              # s0 = mt + s0
+        lwu     a1, (s0)                # a1 = mt[i-1]
+        srli    s1, a1, 30              # mt[i-1] >> 30
+        xor     s1, a1, s1              # s1 = mt[i-1] ^ (mt[i-1] >> 30)
+        mul     s1, s2, s1              # s1 = 1812433253 * s1
+        add     s1, s1, a2              # s1 = s1 + i
+        and     s1, s1, a5              # 32-bit mask
         slli    s0, a2, 2
-        add     s0, s3, s0
-        sw      a1, (s0)                # mt[i]=A
-        mul     a0, s6, a0
-        addi    a0, a0, 1               # S = R * S + 1
-        addi    a2, a2, 1               # I=I+1
-        blt     a2, s4, 1b              # I+1 < 624
+        add     s0, a3, s0
+        sw      s1, (s0)                # mt[i] = s1
+        addi    a2, a2, 1               # i++
+        blt     a2, a4, 1b              # i < N
 
         la      a1, mti
-        sw      s4, (a1)                # mti=N
-        ld      s7, 72(sp)
-        ld      s6, 64(sp)
-        ld      s5, 56(sp)
-        ld      s4, 48(sp)
-        ld      s3, 40(sp)
-        ld      s2, 32(sp)
-        ld      a2, 24(sp)
-        ld      a1, 16(sp)
-        ld      a0,  8(sp)
+        sw      a4, (a1)                # mti=N
+        ld      s3, 72(sp)
+        ld      s2, 64(sp)
+        ld      s1, 56(sp)
+        ld      s0, 48(sp)
+        ld      a5, 40(sp)
+        ld      a4, 32(sp)
+        ld      a3, 24(sp)
+        ld      a2, 16(sp)
+        ld      a1,  8(sp)
         ld      ra,  0(sp)
         addi    sp, sp, 80
         ret
@@ -108,11 +115,11 @@ genrand:
         sd      s8, 88(sp)
         sd      s7, 80(sp)
         sd      s6, 72(sp)
-        sd      s5, 64(sp)
-        sd      s4, 56(sp)
-        sd      s3, 48(sp)
-        sd      s2, 40(sp)
-        sd      s1, 32(sp)
+        sd      s3, 64(sp)
+        sd      s2, 56(sp)
+        sd      s1, 48(sp)
+        sd      a5, 40(sp)
+        sd      a4, 32(sp)
         sd      a3, 24(sp)
         sd      a2, 16(sp)
         sd      a1,  8(sp)
@@ -120,12 +127,12 @@ genrand:
 
         la      s9, N
         la      s3, mt
-        lwu     s4, (s9)                # N
+        lwu     a4, (s9)                # N
         lwu     s2, 36(s9)
-        addi    a2, s4, -1              # N-1
+        addi    a2, a4, -1              # N-1
         ble     s2, a2, 3f              # mti <= 623
 
-        lwu     s5, 4(s9)               # M
+        lwu     a5, 4(s9)               # M
         lwu     s6, 24(s9)              # UPPER_MASK
         lwu     s7, 28(s9)              # LOWER_MASK
         li      s1, 0                   # K=0
@@ -135,11 +142,11 @@ genrand:
         and     a0, a0, s6              # mt[K] & UPPER_MASK
         add     a3, s1, 1               # J=K+1
         jal     rnd_common2             # return Y>>1:a0,Z:a1
-        add     a2, s1, s5              # a2=K+397
+        add     a2, s1, a5              # a2=K+397
         jal     rnd_common
         sw      a1, (s10)               # mt[K]=P^Q^Z
         add     s1, s1, 1               # K=K+1
-        sub     a0, s4, s5              # N-M=227
+        sub     a0, a4, a5              # N-M=227
         blt     s1, a0, 1b
 
     2:  slli    s0, s1, 2
@@ -148,12 +155,12 @@ genrand:
         and     a0, a0, s6              # UPPER_MASK
         addi    a3, s1, 1               # J=K+1
         jal     rnd_common2             # return Y>>1:a0,Z:a1
-        sub     a2, s5, s4
+        sub     a2, a5, a4
         add     a2, s1, a2              # K+(M-N)
         jal     rnd_common
         sw      a1, (s10)               # mt[K]=P^Q^Z
         addi    s1, s1, 1               # K=K+1
-        addi    s0, s4, -1              # 623
+        addi    s0, a4, -1              # 623
         blt     s1, s0, 2b
 
         slli    s0, s1, 2
@@ -162,9 +169,9 @@ genrand:
         and     a0, a0, s6              # UPPER_MASK
         li      a3, 0                   # J=0
         jal     rnd_common2             # return Y>>1:a0,Z:a1
-        addi    a2, s5, -1              # 396
+        addi    a2, a5, -1              # 396
         jal     rnd_common
-        addi    a2, s4, -1              # 623
+        addi    a2, a4, -1              # 623
         slli    s0, a2, 2
         add     s0, s3, s0
         sw      a1, (s0)                # mt[623]=P^Q^Z
@@ -192,11 +199,11 @@ genrand:
         ld      s8, 88(sp)
         ld      s7, 80(sp)
         ld      s6, 72(sp)
-        ld      s5, 64(sp)
-        ld      s4, 56(sp)
-        ld      s3, 48(sp)
-        ld      s2, 40(sp)
-        ld      s1, 32(sp)
+        ld      s3, 64(sp)
+        ld      s2, 56(sp)
+        ld      s1, 48(sp)
+        ld      a5, 40(sp)
+        ld      a4, 32(sp)
         ld      a3, 24(sp)
         ld      a2, 16(sp)
         ld      a1,  8(sp)
@@ -227,8 +234,8 @@ genrand:
 .data
 N:                  .long   624          # 0
 M:                  .long   397          # 4
-n69069:             .long   69069        # 8
-nffff0000:          .long   0xffff0000   # 12
+n6C078965:          .long   1812433253   # 8
+nffffffff:          .long   0xffffffff   # 12
 TEMPERING_MASK_B:   .long   0x9d2c5680   # 16
 TEMPERING_MASK_C:   .long   0xefc60000   # 20
 UPPER_MASK:         .long   0x80000000   # 24

@@ -1,12 +1,12 @@
 # Makefile for rvtl64 - RISC-V
-#     2024/11/25  Jun Mizutani
+#     2025/07/28  Jun Mizutani
 
 INSTALLDIR = /usr/bin/
 
-SOURCE_FULL = debug.s ext.s mt19937.s signal.s syscalls.s vtlfb.s vtlsys.s \
+SOURCE_FULL = debug.s ext.s mt19937ar.s signal.s syscalls.s vtlfb.s vtlsys.s \
          errorno.s fblib.s rvtl64.s stdio.s syserror.s vtllib.s
 
-SOURCE = debug.s ext.s mt19937.s signal.s syscalls.s vtlsys.s \
+SOURCE = debug.s ext.s mt19937ar.s signal.s syscalls.s vtlsys.s \
          errorno.s rvtl64.s stdio.s syserror.s vtllib.s
 
 # self assemble
