@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------
 # Standard I/O Subroutine for RISC-V
-#   2025/03/07 risc-v 64 system call
+#   2025/08/08 risc-v 64 system call
 # Copyright (C) 2024-2025 Jun Mizutani <mizutani.jun@nifty.ne.jp>
 # stdio.s may be copied under the terms of the GNU General Public License.
 # ------------------------------------------------------------------------
@@ -519,10 +519,10 @@ PrintRight:
         sb      a1, 0(fp)               # least digit (reminder)
         bne     a0, zero, 1b            # done ?
 
-        sub     a5, a5, a2              # a5 = no. of space
+        beq     a3, zero, 5f            # positive ?
+        addi    a5, a5, -1              # reserve space for -
+    5:  sub     a5, a5, a2              # a5 = no. of space
         ble     a5, zero, 3f            # dont write space
-        beq     a3, zero, 2f
-        addi    a5, a5, -1              # reserve spase for -
     2:  mv      a0, a4                  # output space or '0'
         jal     OutChar
         addi    a5, a5, -1              # nspace--
@@ -530,11 +530,11 @@ PrintRight:
 
     3:  beq     a3, zero, 4f
         li      a0, '-'                 # if (a0<0) putchar("-")
-        jal     OutChar            # output '-'
+        jal     OutChar                 # output '-'
     4:  lb      a0, 0(fp)               # most digit
         addi    fp, fp, 1               # pop a0
         addi    a0, a0, '0'             # ASCII
-        jal     OutChar            # output a digit
+        jal     OutChar                 # output a digit
         addi    a2, a2, -1              # counter--
         bne     a2, zero, 4b
         addi    sp, sp, 32
